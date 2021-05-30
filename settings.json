@@ -1,7 +1,7 @@
 {
   "TApplication" : {
     "MainForm" : {
-      "segment_size" : "8192",
+      "segment_size" : "16384",
       "database_name" : "inet4://localhost:3053/test",
       "database_paramsCount" : "3",
       "database_paramsItem1" : "user_name=SYSDBA",

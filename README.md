@@ -48,3 +48,18 @@ set pic = :pic
 where id = :id
 ```
 
+Настройки сохраняются в файле `settings.json`.
+
+Исполняемый файл можно скачать по ссылке [blob_optimize.exe](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize.exe)
+
+Примеры файлов с запросами:
+
+* [select.sql](https://github.com/sim1984/blob_opt/releases/download/1.0/select.sql)
+* [modify.sql](https://github.com/sim1984/blob_opt/releases/download/1.0/modify.sql)
+
+***
+*Важно*
+
+Требуется установленная 64-разрядная библиотека `fbclient.dll`. 
+Если библиотека не установлена, то поместите её в каталог с исполняемым файлом.
+***
