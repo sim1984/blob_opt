@@ -1,0 +1,188 @@
+object MainForm: TMainForm
+  Left = 562
+  Height = 410
+  Top = 241
+  Width = 717
+  Caption = 'Опитимизация BLOB'
+  ClientHeight = 410
+  ClientWidth = 717
+  OnCreate = FormCreate
+  OnShow = FormShow
+  LCLVersion = '2.0.12.0'
+  object btnStart: TButton
+    Left = 160
+    Height = 33
+    Top = 344
+    Width = 118
+    Caption = 'Оптимизировать'
+    OnClick = btnStartClick
+    TabOrder = 0
+  end
+  object Label3: TLabel
+    Left = 16
+    Height = 15
+    Top = 272
+    Width = 157
+    Caption = 'Желаемый размер сегмента'
+    ParentColor = False
+  end
+  object edtSegmentSize: TSpinEdit
+    Left = 16
+    Height = 23
+    Top = 296
+    Width = 160
+    MaxValue = 32765
+    MinValue = 1
+    OnChange = edtSegmentSizeChange
+    TabOrder = 1
+    Value = 8196
+  end
+  object btnSave: TButton
+    Left = 288
+    Height = 33
+    Top = 345
+    Width = 104
+    Caption = 'Сохранить'
+    OnClick = btnSaveClick
+    TabOrder = 2
+  end
+  object btnStat: TButton
+    Left = 16
+    Height = 33
+    Top = 345
+    Width = 123
+    Caption = 'Анализ'
+    OnClick = btnStatClick
+    TabOrder = 3
+  end
+  object mmLog: TMemo
+    Left = 8
+    Height = 243
+    Top = 13
+    Width = 696
+    TabOrder = 4
+  end
+  object rbBlobType: TRadioGroup
+    Left = 207
+    Height = 64
+    Top = 272
+    Width = 185
+    AutoFill = True
+    Caption = 'Тип BLOB'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 44
+    ClientWidth = 181
+    ItemIndex = 0
+    Items.Strings = (
+      'Сегментированный'
+      'Потоковый'
+    )
+    OnClick = rbBlobTypeClick
+    TabOrder = 5
+  end
+  object edtPKFieldName: TEdit
+    Left = 528
+    Height = 23
+    Top = 272
+    Width = 152
+    OnChange = edtPKFieldNameChange
+    TabOrder = 6
+    Text = 'id'
+  end
+  object Label1: TLabel
+    Left = 416
+    Height = 15
+    Top = 280
+    Width = 98
+    Caption = 'Первичный ключ'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 416
+    Height = 15
+    Top = 312
+    Width = 59
+    Caption = 'BLOB поле'
+    ParentColor = False
+  end
+  object edtBLOBFieldName: TEdit
+    Left = 528
+    Height = 23
+    Top = 304
+    Width = 152
+    OnChange = edtBLOBFieldNameChange
+    TabOrder = 7
+  end
+  object Database: TIBDatabase
+    Connected = False
+    LoginPrompt = False
+    CreateIfNotExists = False
+    AllowStreamedConnected = False
+    Params.Strings = (
+      ''
+    )
+    DefaultTransaction = trRead
+    IdleTimer = 0
+    TraceFlags = []
+    UseDefaultSystemCodePage = False
+    Left = 496
+    Top = 208
+  end
+  object trRead: TIBTransaction
+    Active = False
+    DefaultDatabase = Database
+    Params.Strings = (
+      'read_committed'
+      'rec_version'
+      'nowait'
+      'read'
+    )
+    Left = 592
+    Top = 208
+  end
+  object trWrite: TIBTransaction
+    Active = False
+    DefaultDatabase = Database
+    DefaultAction = TARollback
+    Params.Strings = (
+      'read_committed'
+      'rec_version'
+      'nowait'
+    )
+    Left = 632
+    Top = 208
+  end
+  object qryRead: TIBSQL
+    Database = Database
+    CaseSensitiveParameterNames = False
+    GenerateParamNames = False
+    UniqueParamNames = False
+    ParamCheck = True
+    Transaction = trRead
+    Left = 592
+    Top = 152
+  end
+  object qryWrite: TIBSQL
+    Database = Database
+    CaseSensitiveParameterNames = False
+    GenerateParamNames = False
+    UniqueParamNames = False
+    ParamCheck = True
+    Transaction = trWrite
+    Left = 632
+    Top = 152
+  end
+  object JSONPropStorage: TJSONPropStorage
+    StoredValues = <>
+    Formatted = True
+    Active = False
+    Left = 496
+    Top = 152
+  end
+end
