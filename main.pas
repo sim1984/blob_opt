@@ -166,8 +166,8 @@ begin
       if (xBlobType = FBlobType) and
          ((FBlobType = btStream) or ((FBlobType = btSegmented) and (xNumSegments = 1))) then
       begin
-        // потоковый блоб не надо преобрзовывать в потоковый
-        // сегментированный блоб с одним сегментом не надо пересегментировать
+        // streaming blob does not need to be converted to streaming
+        // a segmented blob with one segment does not need to be re-segmented
         xReadBlob.Close;
         qryRead.Next;
         continue;
@@ -350,6 +350,8 @@ begin
   end;
 end;
 
+
+
 procedure TMainForm.rbBlobTypeClick(Sender: TObject);
 begin
   FBlobType := TBlobType(rbBlobType.ItemIndex);
@@ -367,14 +369,13 @@ end;
 
 function TMainForm.ReadBlobStat(ABlob: IBlob): Double;
 var
-  xStartTime: DWord;
   xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
   xReadSize: Longint;
   iCounterPerSec: Int64;
   T1, T2: Int64;
 begin
-  QueryPerformanceFrequency(iCounterPerSec);//определили частоту счётчика
-  QueryPerformanceCounter(T1); //засекли время начала операции
+  QueryPerformanceFrequency(iCounterPerSec); // determined the counter frequency
+  QueryPerformanceCounter(T1); // timed the start of the operation
 
   xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   while (xReadSize > 0) do
@@ -382,7 +383,7 @@ begin
     xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   end;
 
-  QueryPerformanceCounter(T2);//засекли время окончания
+  QueryPerformanceCounter(T2); // timed the end
 
   Result := 1000.0 * (T2 - T1) / iCounterPerSec;
 end;
@@ -430,21 +431,21 @@ begin
     end
     else
     begin
-      xStream.Write(xBuffer, xReadSize); // остаток + xReadSize
-      // когда размер превышает макс размер сегмента
+      xStream.Write(xBuffer, xReadSize); // remainder + xReadSize
+      // when the size exceeds the maximum segment size
       if (xStream.Size >= FSegmentSize) then
       begin
         xStream.Position := 0;
-        // читать размером нового сегмента и писать в блоб
+        // read the size of the new segment and write to the blob
         xStreamReadSize := xStream.Read(xBuffer, FSegmentSize);
         while (xStreamReadSize = FSegmentSize) do
         begin
-          // записать его в новый блоб
+          // write it to a new blob
           Result.Write(xBuffer, xStreamReadSize);
           xStreamReadSize := xStream.Read(xBuffer, FSegmentSize);
         end;
 
-        // сбросить поток и записать этот буфер обратно
+        // flush the stream and write this buffer back
         if xStreamReadSize > 0 then
         begin
           xStream.Clear;
@@ -457,7 +458,7 @@ begin
         xStream.Clear;
       end;
     end;
-    // и продолжить читать блоб
+    // and continue reading blob
     xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   end;
   if Assigned(xStream) then

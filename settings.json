@@ -2,7 +2,7 @@
   "TApplication" : {
     "MainForm" : {
       "segment_size" : "65535",
-      "database_name" : "localhost/3025:d:\\fbdata\\2.5\\NEWDEMO.FDB",
+      "database_name" : "localhost/3052:f:\\fbdata\\2.5\\NEWDEMO.FDB",
       "database_paramsCount" : "3",
       "database_paramsItem1" : "user_name=SYSDBA",
       "database_paramsItem2" : "password=masterkey",

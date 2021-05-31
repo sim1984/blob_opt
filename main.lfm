@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Height = 460
   Top = 207
   Width = 774
-  Caption = 'Опитимизация BLOB'
+  Caption = 'Optimizing BLOB fields'
   ClientHeight = 460
   ClientWidth = 774
   OnCreate = FormCreate
@@ -14,7 +14,7 @@ object MainForm: TMainForm
     Height = 33
     Top = 416
     Width = 118
-    Caption = 'Оптимизировать'
+    Caption = 'Optimize'
     OnClick = btnStartClick
     TabOrder = 0
   end
@@ -22,8 +22,8 @@ object MainForm: TMainForm
     Left = 16
     Height = 15
     Top = 352
-    Width = 157
-    Caption = 'Желаемый размер сегмента'
+    Width = 111
+    Caption = 'Wishful segment size'
     ParentColor = False
   end
   object edtSegmentSize: TSpinEdit
@@ -42,7 +42,7 @@ object MainForm: TMainForm
     Height = 33
     Top = 416
     Width = 104
-    Caption = 'Сохранить'
+    Caption = 'Save settings'
     OnClick = btnSaveClick
     TabOrder = 2
   end
@@ -51,7 +51,7 @@ object MainForm: TMainForm
     Height = 33
     Top = 416
     Width = 123
-    Caption = 'Анализ'
+    Caption = 'Analyze'
     OnClick = btnStatClick
     TabOrder = 3
   end
@@ -70,7 +70,7 @@ object MainForm: TMainForm
     Top = 335
     Width = 185
     AutoFill = True
-    Caption = 'Тип BLOB'
+    Caption = 'BLOB type'
     ChildSizing.LeftRightSpacing = 6
     ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
     ChildSizing.EnlargeVertical = crsHomogenousChildResize
@@ -82,8 +82,8 @@ object MainForm: TMainForm
     ClientWidth = 181
     ItemIndex = 0
     Items.Strings = (
-      'Сегментированный'
-      'Потоковый'
+      'Segmented'
+      'Stream'
     )
     OnClick = rbBlobTypeClick
     TabOrder = 5
@@ -101,16 +101,16 @@ object MainForm: TMainForm
     Left = 416
     Height = 15
     Top = 352
-    Width = 98
-    Caption = 'Первичный ключ'
+    Width = 88
+    Caption = 'Primary key field'
     ParentColor = False
   end
   object Label2: TLabel
     Left = 416
     Height = 15
     Top = 376
-    Width = 59
-    Caption = 'BLOB поле'
+    Width = 55
+    Caption = 'BLOB field'
     ParentColor = False
   end
   object edtBLOBFieldName: TEdit
@@ -125,8 +125,8 @@ object MainForm: TMainForm
     Left = 16
     Height = 15
     Top = 264
-    Width = 118
-    Caption = 'Строка подключения'
+    Width = 95
+    Caption = 'Connection string'
     ParentColor = False
   end
   object edtDatabase: TEdit
@@ -170,32 +170,32 @@ object MainForm: TMainForm
     Left = 416
     Height = 15
     Top = 267
-    Width = 77
-    Caption = 'Пользователь'
+    Width = 23
+    Caption = 'User'
     ParentColor = False
   end
   object Label6: TLabel
     Left = 536
     Height = 15
     Top = 267
-    Width = 42
-    Caption = 'Пароль'
+    Width = 50
+    Caption = 'Password'
     ParentColor = False
   end
   object Label7: TLabel
     Left = 648
     Height = 15
     Top = 264
-    Width = 94
-    Caption = 'Набор символов'
+    Width = 69
+    Caption = 'Character set'
     ParentColor = False
   end
   object cbxReadTimeStat: TCheckBox
     Left = 16
     Height = 19
     Top = 323
-    Width = 167
-    Caption = 'Время чтения в статистике'
+    Width = 154
+    Caption = 'Reading time in statistics '
     OnChange = cbxReadTimeStatChange
     TabOrder = 12
   end
