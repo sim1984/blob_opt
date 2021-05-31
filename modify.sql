@@ -1,3 +1,3 @@
-update t
-set pic = :pic
-where id = :id
+update wnppaper
+set paper = :paper
+where paperid = :paperid

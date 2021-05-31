@@ -1,18 +1,18 @@
 object MainForm: TMainForm
-  Left = 562
-  Height = 410
-  Top = 241
-  Width = 717
+  Left = 524
+  Height = 460
+  Top = 207
+  Width = 774
   Caption = 'Опитимизация BLOB'
-  ClientHeight = 410
-  ClientWidth = 717
+  ClientHeight = 460
+  ClientWidth = 774
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '2.0.12.0'
   object btnStart: TButton
     Left = 160
     Height = 33
-    Top = 344
+    Top = 416
     Width = 118
     Caption = 'Оптимизировать'
     OnClick = btnStartClick
@@ -21,7 +21,7 @@ object MainForm: TMainForm
   object Label3: TLabel
     Left = 16
     Height = 15
-    Top = 272
+    Top = 352
     Width = 157
     Caption = 'Желаемый размер сегмента'
     ParentColor = False
@@ -29,7 +29,7 @@ object MainForm: TMainForm
   object edtSegmentSize: TSpinEdit
     Left = 16
     Height = 23
-    Top = 296
+    Top = 376
     Width = 160
     MaxValue = 32765
     MinValue = 1
@@ -38,9 +38,9 @@ object MainForm: TMainForm
     Value = 8196
   end
   object btnSave: TButton
-    Left = 288
+    Left = 296
     Height = 33
-    Top = 345
+    Top = 416
     Width = 104
     Caption = 'Сохранить'
     OnClick = btnSaveClick
@@ -49,23 +49,25 @@ object MainForm: TMainForm
   object btnStat: TButton
     Left = 16
     Height = 33
-    Top = 345
+    Top = 416
     Width = 123
     Caption = 'Анализ'
     OnClick = btnStatClick
     TabOrder = 3
   end
   object mmLog: TMemo
-    Left = 8
+    Left = 0
     Height = 243
-    Top = 13
-    Width = 696
+    Top = 0
+    Width = 774
+    Align = alTop
+    ReadOnly = True
     TabOrder = 4
   end
   object rbBlobType: TRadioGroup
-    Left = 207
+    Left = 215
     Height = 64
-    Top = 272
+    Top = 335
     Width = 185
     AutoFill = True
     Caption = 'Тип BLOB'
@@ -87,9 +89,9 @@ object MainForm: TMainForm
     TabOrder = 5
   end
   object edtPKFieldName: TEdit
-    Left = 528
+    Left = 536
     Height = 23
-    Top = 272
+    Top = 344
     Width = 152
     OnChange = edtPKFieldNameChange
     TabOrder = 6
@@ -98,7 +100,7 @@ object MainForm: TMainForm
   object Label1: TLabel
     Left = 416
     Height = 15
-    Top = 280
+    Top = 352
     Width = 98
     Caption = 'Первичный ключ'
     ParentColor = False
@@ -106,18 +108,87 @@ object MainForm: TMainForm
   object Label2: TLabel
     Left = 416
     Height = 15
-    Top = 312
+    Top = 376
     Width = 59
     Caption = 'BLOB поле'
     ParentColor = False
   end
   object edtBLOBFieldName: TEdit
-    Left = 528
+    Left = 536
     Height = 23
-    Top = 304
+    Top = 376
     Width = 152
     OnChange = edtBLOBFieldNameChange
     TabOrder = 7
+  end
+  object Label4: TLabel
+    Left = 16
+    Height = 15
+    Top = 264
+    Width = 118
+    Caption = 'Строка подключения'
+    ParentColor = False
+  end
+  object edtDatabase: TEdit
+    Left = 16
+    Height = 23
+    Top = 288
+    Width = 384
+    OnChange = edtDatabaseChange
+    TabOrder = 8
+  end
+  object edtUser: TEdit
+    Left = 416
+    Height = 23
+    Top = 288
+    Width = 104
+    OnChange = edtUserChange
+    TabOrder = 9
+    Text = 'edtUser'
+  end
+  object edtPassword: TEdit
+    Left = 536
+    Height = 23
+    Top = 288
+    Width = 96
+    EchoMode = emPassword
+    OnChange = edtPasswordChange
+    PasswordChar = '*'
+    TabOrder = 10
+    Text = 'edtPassword'
+  end
+  object edtCharset: TEdit
+    Left = 648
+    Height = 23
+    Top = 287
+    Width = 104
+    OnChange = edtCharsetChange
+    TabOrder = 11
+    Text = 'edtCharset'
+  end
+  object Label5: TLabel
+    Left = 416
+    Height = 15
+    Top = 267
+    Width = 77
+    Caption = 'Пользователь'
+    ParentColor = False
+  end
+  object Label6: TLabel
+    Left = 536
+    Height = 15
+    Top = 267
+    Width = 42
+    Caption = 'Пароль'
+    ParentColor = False
+  end
+  object Label7: TLabel
+    Left = 648
+    Height = 15
+    Top = 264
+    Width = 94
+    Caption = 'Набор символов'
+    ParentColor = False
   end
   object Database: TIBDatabase
     Connected = False

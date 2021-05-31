@@ -1,6 +1,6 @@
 select 
-  id,
-  pic
-from t
-where pic is not null
+  paperid,
+  paper
+from wnppaper
+
 
