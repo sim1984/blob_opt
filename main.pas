@@ -6,7 +6,11 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Spin,
-  JSONPropStorage, ExtCtrls, IBDatabase, Ib, IBSQL;
+  JSONPropStorage, ExtCtrls, IBDatabase, Ib, IBSQL
+  {$ifdef WINDOWS}
+  , Windows
+  {$endif}
+  ;
 
 type
 
@@ -16,6 +20,7 @@ type
     btnStart: TButton;
     btnSave: TButton;
     btnStat: TButton;
+    cbxReadTimeStat: TCheckBox;
     Database: TIBDatabase;
     edtUser: TEdit;
     edtPassword: TEdit;
@@ -41,6 +46,7 @@ type
     procedure btnSaveClick(Sender: TObject);
     procedure btnStartClick(Sender: TObject);
     procedure btnStatClick(Sender: TObject);
+    procedure cbxReadTimeStatChange(Sender: TObject);
     procedure edtBLOBFieldNameChange(Sender: TObject);
     procedure edtCharsetChange(Sender: TObject);
     procedure edtDatabaseChange(Sender: TObject);
@@ -52,12 +58,14 @@ type
     procedure FormShow(Sender: TObject);
     procedure rbBlobTypeClick(Sender: TObject);
   private
-    FSegmentSize: Smallint;
+    FSegmentSize: Integer;
     FBlobType: TBlobType;
+    FReadStatFlag: Boolean;
     FBlobFieldName: string;
     FPKFieldName: string;
 
     function GetAppDir: string;
+    function ReadBlobStat(ABlob: IBlob): Double;
   protected
     procedure ReadSettings;
     function ConvertBlob(ABlob: IBlob): IBlob;
@@ -66,6 +74,9 @@ type
   public
     property AppDir: string read GetAppDir;
   end;
+
+const
+  MAX_SEGMENT_SIZE = 65535;
 
 var
   MainForm: TMainForm;
@@ -84,6 +95,7 @@ begin
   JSONPropStorage.WriteInteger('blob_type', Integer(FBlobType));
   JSONPropStorage.WriteString('blob_field', FBlobFieldName);
   JSONPropStorage.WriteString('pk_field', FPKFieldName);
+  JSONPropStorage.WriteBoolean('time_stat', FReadStatFlag);
   JSONPropStorage.Save;
 end;
 
@@ -201,6 +213,7 @@ var
   xMaxSegmentSize, xTotalSize: Int64;
   xBlobType: TBlobType;
   xBlobField: ISQLData;
+  xReadTime: Double;
 begin
   mmLog.Lines.Clear;
 
@@ -232,15 +245,32 @@ begin
 
       xReadBlob := xBlobField.GetAsBlob;
       xReadBlob.GetInfo(xNumSegments, xMaxSegmentSize, xTotalSize, xBlobType);
-      mmLog.Lines.Add(
-        'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
-        [
-          xNumSegments,
-          xMaxSegmentSize,
-          xTotalSize,
-          sBlobTypes[xBlobType]
-        ]
-      );
+      if FReadStatFlag then
+      begin
+        xReadTime := ReadBlobStat(xReadBlob);
+        mmLog.Lines.Add(
+          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s; ReadTime: %8.3f ms;',
+          [
+            xNumSegments,
+            xMaxSegmentSize,
+            xTotalSize,
+            sBlobTypes[xBlobType],
+            xReadTime
+          ]
+        );
+      end
+      else
+      begin
+        mmLog.Lines.Add(
+          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
+          [
+            xNumSegments,
+            xMaxSegmentSize,
+            xTotalSize,
+            sBlobTypes[xBlobType]
+          ]
+        );
+      end;
       xReadBlob.Close;
       qryRead.Next;
     end;
@@ -254,6 +284,11 @@ begin
   trRead.Commit;
   Database.Close();
   EnabledControls;
+end;
+
+procedure TMainForm.cbxReadTimeStatChange(Sender: TObject);
+begin
+  FReadStatFlag := cbxReadTimeStat.Checked;
 end;
 
 procedure TMainForm.edtBLOBFieldNameChange(Sender: TObject);
@@ -308,6 +343,7 @@ begin
   edtPassword.Text := Database.Params.Values['password'];
   edtCharset.Text := Database.Params.Values['lc_ctype'];
   rbBlobType.ItemIndex := Integer(FBlobType);
+  cbxReadTimeStat.Checked := FReadStatFlag;
   case FBlobType of
     btSegmented: edtSegmentSize.Enabled := True;
     btStream: edtSegmentSize.Enabled := False;
@@ -329,9 +365,32 @@ begin
   Result := ExtractFileDir(Application.ExeName);
 end;
 
+function TMainForm.ReadBlobStat(ABlob: IBlob): Double;
+var
+  xStartTime: DWord;
+  xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
+  xReadSize: Longint;
+  iCounterPerSec: Int64;
+  T1, T2: Int64;
+begin
+  QueryPerformanceFrequency(iCounterPerSec);//определили частоту счётчика
+  QueryPerformanceCounter(T1); //засекли время начала операции
+
+  xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
+  while (xReadSize > 0) do
+  begin
+    xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
+  end;
+
+  QueryPerformanceCounter(T2);//засекли время окончания
+
+  Result := 1000.0 * (T2 - T1) / iCounterPerSec;
+end;
+
 procedure TMainForm.ReadSettings;
 begin
-  FSegmentSize := JSONPropStorage.ReadInteger('segment_size', 1024);
+  FSegmentSize := JSONPropStorage.ReadInteger('segment_size', 65535);
+  FReadStatFlag := JSONPropStorage.ReadBoolean('time_stat', False);
   FBlobType := TBlobType(JSONPropStorage.ReadInteger('blob_type', Integer(btSegmented)));
   FBlobFieldName := JSONPropStorage.ReadString('blob_field', '');
   FPKFieldName := JSONPropStorage.ReadString('pk_field', 'ID');
@@ -343,14 +402,12 @@ begin
 end;
 
 function TMainForm.ConvertBlob(ABlob: IBlob): IBlob;
-const
-  MaxSegmantSize = 32765;
 var
   xBPB: IBPB;
   xReadSize: Longint;
   xStream: TBytesStream;
   xStreamReadSize: Longint;
-  xBuffer: array[0..65535] of Byte;
+  xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
 begin
   xStream := nil;
   xBPB := nil;
@@ -364,7 +421,7 @@ begin
     xStream := TBytesStream.create();
   end;
   Result := Database.Attachment.CreateBlob(trWrite.TransactionIntf, ABlob.GetSubType, ABlob.GetCharsetId,  xBPB);
-  xReadSize := ABlob.Read(xBuffer, MaxSegmantSize);
+  xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   while (xReadSize > 0) do
   begin
     if (FBlobType = btStream) then
@@ -401,7 +458,7 @@ begin
       end;
     end;
     // и продолжить читать блоб
-    xReadSize := ABlob.Read(xBuffer, MaxSegmantSize);
+    xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   end;
   if Assigned(xStream) then
   begin

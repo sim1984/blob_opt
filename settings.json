@@ -1,15 +1,16 @@
 {
   "TApplication" : {
     "MainForm" : {
-      "segment_size": "24000",
-      "database_name": "localhost/3025:d:\\fbdata\\2.5\\NEWDEMO.FDB",
-      "database_paramsCount": "3",
-      "database_paramsItem1": "user_name=SYSDBA",
-      "database_paramsItem2": "password=masterkey",
-      "database_paramsItem3": "lc_ctype=UTF8",
-      "blob_type" : "0",
+      "segment_size" : "65535",
+      "database_name" : "localhost/3025:d:\\fbdata\\2.5\\NEWDEMO.FDB",
+      "database_paramsCount" : "3",
+      "database_paramsItem1" : "user_name=SYSDBA",
+      "database_paramsItem2" : "password=masterkey",
+      "database_paramsItem3" : "lc_ctype=UTF8",
+      "blob_type" : "1",
       "blob_field" : "paper",
-      "pk_field" : "paperid"
+      "pk_field" : "paperid",
+      "time_stat" : "1"
     }
   }
 }

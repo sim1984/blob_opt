@@ -31,7 +31,7 @@ object MainForm: TMainForm
     Height = 23
     Top = 376
     Width = 160
-    MaxValue = 32765
+    MaxValue = 65535
     MinValue = 1
     OnChange = edtSegmentSizeChange
     TabOrder = 1
@@ -189,6 +189,15 @@ object MainForm: TMainForm
     Width = 94
     Caption = 'Набор символов'
     ParentColor = False
+  end
+  object cbxReadTimeStat: TCheckBox
+    Left = 16
+    Height = 19
+    Top = 323
+    Width = 167
+    Caption = 'Время чтения в статистике'
+    OnChange = cbxReadTimeStatChange
+    TabOrder = 12
   end
   object Database: TIBDatabase
     Connected = False
