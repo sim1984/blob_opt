@@ -186,7 +186,13 @@ begin
       qryWrite.ExecQuery;
       xWriteBlob.Cancel;
       qryRead.Next;
-      mmLog.Lines.Add('Convert blob. Id=%d', [id]);
+      case xKeyField.GetSQLType of
+        SQL_INT64, SQL_LONG, SQL_SHORT:
+          mmLog.Lines.Add('Convert blob. Id=%d', [id]);
+        else
+          mmLog.Lines.Add('Convert blob. Id="%s"', [idStr]);
+      end;
+
     end;
 
     trWrite.Commit;
@@ -212,7 +218,9 @@ var
   xNumSegments: Int64;
   xMaxSegmentSize, xTotalSize: Int64;
   xBlobType: TBlobType;
-  xBlobField: ISQLData;
+  xKeyField, xBlobField: ISQLData;
+  id: Int64;
+  idStr: string;
   xReadTime: Double;
 begin
   mmLog.Lines.Clear;
@@ -231,6 +239,11 @@ begin
 
   try
     qryRead.ExecQuery;
+    xKeyField := qryRead.FieldByName(FPKFieldName);
+    if xKeyField = nil then
+      raise Exception.CreateFmt('Field %s not found', [FPKFieldName]);
+
+
     xBlobField := qryRead.FieldByName(FBlobFieldName);
     if xBlobField = nil then
       raise Exception.CreateFmt('Field %s not found', [FBlobFieldName]);
@@ -243,24 +256,24 @@ begin
         continue;
       end;
 
+      case xKeyField.GetSQLType of
+        SQL_INT64, SQL_LONG, SQL_SHORT:
+          id := xKeyField.AsInt64;
+        else
+          idStr := xKeyField.AsString;
+      end;
+
       xReadBlob := xBlobField.GetAsBlob;
       xReadBlob.GetInfo(xNumSegments, xMaxSegmentSize, xTotalSize, xBlobType);
       if FReadStatFlag then
       begin
         xReadTime := ReadBlobStat(xReadBlob);
-        mmLog.Lines.Add(
-          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s; ReadTime: %8.3f ms;',
-          [
-            xNumSegments,
-            xMaxSegmentSize,
-            xTotalSize,
-            sBlobTypes[xBlobType],
-            xReadTime
-          ]
-        );
-      end
-      else
-      begin
+        case xKeyField.GetSQLType of
+          SQL_INT64, SQL_LONG, SQL_SHORT:
+            mmLog.Lines.Add('Key %s=%d; ReadTime: %8.3f ms;', [FPKFieldName, id, xReadTime]);
+          else
+            mmLog.Lines.Add('Key %s="%s"; ReadTime: %8.3f ms;', [FPKFieldName, idStr, xReadTime]);
+        end;
         mmLog.Lines.Add(
           'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
           [
@@ -270,6 +283,26 @@ begin
             sBlobTypes[xBlobType]
           ]
         );
+        mmLog.Lines.Add('');
+      end
+      else
+      begin
+        case xKeyField.GetSQLType of
+          SQL_INT64, SQL_LONG, SQL_SHORT:
+            mmLog.Lines.Add('Key %s=%d;', [FPKFieldName, id]);
+          else
+            mmLog.Lines.Add('Key %s="%s";', [FPKFieldName, idStr]);
+        end;
+        mmLog.Lines.Add(
+          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
+          [
+            xNumSegments,
+            xMaxSegmentSize,
+            xTotalSize,
+            sBlobTypes[xBlobType]
+          ]
+        );
+        mmLog.Lines.Add('');
       end;
       xReadBlob.Close;
       qryRead.Next;
