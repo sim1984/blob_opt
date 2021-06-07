@@ -1,18 +1,18 @@
 object MainForm: TMainForm
-  Left = 524
-  Height = 460
-  Top = 207
-  Width = 774
+  Left = 308
+  Height = 542
+  Top = 104
+  Width = 826
   Caption = 'Optimizing BLOB fields'
-  ClientHeight = 460
-  ClientWidth = 774
+  ClientHeight = 542
+  ClientWidth = 826
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '2.0.12.0'
   object btnStart: TButton
     Left = 282
     Height = 33
-    Top = 416
+    Top = 488
     Width = 118
     Caption = 'Optimize'
     OnClick = btnStartClick
@@ -21,7 +21,7 @@ object MainForm: TMainForm
   object Label3: TLabel
     Left = 16
     Height = 15
-    Top = 352
+    Top = 432
     Width = 111
     Caption = 'Wishful segment size'
     ParentColor = False
@@ -29,7 +29,7 @@ object MainForm: TMainForm
   object edtSegmentSize: TSpinEdit
     Left = 16
     Height = 23
-    Top = 376
+    Top = 456
     Width = 160
     MaxValue = 65535
     MinValue = 1
@@ -40,7 +40,7 @@ object MainForm: TMainForm
   object btnSave: TButton
     Left = 152
     Height = 33
-    Top = 416
+    Top = 488
     Width = 120
     Caption = 'Save settings'
     OnClick = btnSaveClick
@@ -49,7 +49,7 @@ object MainForm: TMainForm
   object btnStat: TButton
     Left = 16
     Height = 33
-    Top = 416
+    Top = 488
     Width = 123
     Caption = 'Analyze'
     OnClick = btnStatClick
@@ -59,16 +59,16 @@ object MainForm: TMainForm
     Left = 0
     Height = 243
     Top = 0
-    Width = 774
+    Width = 826
     Align = alTop
     ReadOnly = True
     ScrollBars = ssAutoVertical
     TabOrder = 4
   end
   object rbBlobType: TRadioGroup
-    Left = 215
+    Left = 16
     Height = 64
-    Top = 335
+    Top = 360
     Width = 185
     AutoFill = True
     Caption = 'BLOB type'
@@ -89,43 +89,10 @@ object MainForm: TMainForm
     OnClick = rbBlobTypeClick
     TabOrder = 5
   end
-  object edtPKFieldName: TEdit
-    Left = 536
-    Height = 23
-    Top = 344
-    Width = 152
-    OnChange = edtPKFieldNameChange
-    TabOrder = 6
-    Text = 'id'
-  end
-  object Label1: TLabel
-    Left = 416
-    Height = 15
-    Top = 352
-    Width = 88
-    Caption = 'Primary key field'
-    ParentColor = False
-  end
-  object Label2: TLabel
-    Left = 416
-    Height = 15
-    Top = 376
-    Width = 55
-    Caption = 'BLOB field'
-    ParentColor = False
-  end
-  object edtBLOBFieldName: TEdit
-    Left = 536
-    Height = 23
-    Top = 376
-    Width = 152
-    OnChange = edtBLOBFieldNameChange
-    TabOrder = 7
-  end
   object Label4: TLabel
     Left = 16
     Height = 15
-    Top = 264
+    Top = 256
     Width = 95
     Caption = 'Connection string'
     ParentColor = False
@@ -133,72 +100,222 @@ object MainForm: TMainForm
   object edtDatabase: TEdit
     Left = 16
     Height = 23
-    Top = 288
+    Top = 280
     Width = 384
     OnChange = edtDatabaseChange
-    TabOrder = 8
+    TabOrder = 6
   end
   object edtUser: TEdit
-    Left = 416
+    Left = 16
     Height = 23
-    Top = 288
+    Top = 328
     Width = 104
     OnChange = edtUserChange
-    TabOrder = 9
+    TabOrder = 7
     Text = 'edtUser'
   end
   object edtPassword: TEdit
-    Left = 536
+    Left = 160
     Height = 23
-    Top = 288
+    Top = 328
     Width = 96
     EchoMode = emPassword
     OnChange = edtPasswordChange
     PasswordChar = '*'
-    TabOrder = 10
+    TabOrder = 8
     Text = 'edtPassword'
   end
   object edtCharset: TEdit
-    Left = 648
+    Left = 296
     Height = 23
-    Top = 287
+    Top = 328
     Width = 104
     OnChange = edtCharsetChange
-    TabOrder = 11
+    TabOrder = 9
     Text = 'edtCharset'
   end
   object Label5: TLabel
-    Left = 416
+    Left = 16
     Height = 15
-    Top = 267
+    Top = 312
     Width = 23
     Caption = 'User'
     ParentColor = False
   end
   object Label6: TLabel
-    Left = 536
+    Left = 160
     Height = 15
-    Top = 267
+    Top = 312
     Width = 50
     Caption = 'Password'
     ParentColor = False
   end
   object Label7: TLabel
-    Left = 648
+    Left = 296
     Height = 15
-    Top = 264
+    Top = 312
     Width = 69
     Caption = 'Character set'
     ParentColor = False
   end
   object cbxReadTimeStat: TCheckBox
-    Left = 16
+    Left = 240
     Height = 19
-    Top = 323
+    Top = 392
     Width = 154
     Caption = 'Reading time in statistics '
     OnChange = cbxReadTimeStatChange
+    TabOrder = 10
+  end
+  object cbxAutoBuildSql: TCheckBox
+    Left = 240
+    Height = 19
+    Top = 360
+    Width = 130
+    Caption = 'Autobuild SQL query'
+    Checked = True
+    OnChange = cbxAutoBuildSqlChange
+    State = cbChecked
+    TabOrder = 11
+  end
+  object GroupBox1: TGroupBox
+    Left = 432
+    Height = 264
+    Top = 256
+    Width = 376
+    Caption = 'SQL Queries'
+    ClientHeight = 244
+    ClientWidth = 372
     TabOrder = 12
+    object edtTableName: TEdit
+      Left = 144
+      Height = 23
+      Top = 0
+      Width = 216
+      OnChange = edtTableNameChange
+      TabOrder = 0
+    end
+    object Label8: TLabel
+      Left = 8
+      Height = 15
+      Top = 8
+      Width = 62
+      Caption = 'Table name'
+      ParentColor = False
+    end
+    object edtBLOBFieldName: TEdit
+      Left = 144
+      Height = 23
+      Top = 32
+      Width = 216
+      OnChange = edtBLOBFieldNameChange
+      TabOrder = 1
+    end
+    object Label2: TLabel
+      Left = 8
+      Height = 15
+      Top = 40
+      Width = 55
+      Caption = 'BLOB field'
+      ParentColor = False
+    end
+    object edtPKFieldName: TEdit
+      Left = 144
+      Height = 23
+      Top = 64
+      Width = 216
+      OnChange = edtPKFieldNameChange
+      TabOrder = 2
+      Text = 'id'
+    end
+    object Label1: TLabel
+      Left = 8
+      Height = 15
+      Top = 72
+      Width = 88
+      Caption = 'Primary key field'
+      ParentColor = False
+    end
+    object edtRows: TSpinEdit
+      Left = 144
+      Height = 23
+      Top = 96
+      Width = 216
+      MaxValue = 1000000000
+      MinValue = -1
+      OnChange = edtRowsChange
+      TabOrder = 3
+      Value = -1
+    end
+    object edtWhereFilter: TLabeledEdit
+      Left = 72
+      Height = 23
+      Top = 128
+      Width = 288
+      EditLabel.Height = 15
+      EditLabel.Width = 61
+      EditLabel.Caption = 'Where filter'
+      EditLabel.ParentColor = False
+      LabelPosition = lpLeft
+      TabOrder = 4
+      OnChange = edtWhereFilterChange
+    end
+    object Label9: TLabel
+      Left = 8
+      Height = 15
+      Top = 104
+      Width = 121
+      Caption = 'Limit rows (-1 no limit)'
+      ParentColor = False
+    end
+    object edtSelectSqlFilename: TFileNameEdit
+      Left = 144
+      Height = 23
+      Top = 160
+      Width = 216
+      DialogTitle = 'Select Sql file'
+      Filter = 'SQL files|*.sql'
+      FilterIndex = 0
+      DefaultExt = '*.sql'
+      HideDirectories = False
+      ButtonWidth = 23
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 5
+      OnChange = edtSelectSqlFilenameChange
+    end
+    object Label10: TLabel
+      Left = 8
+      Height = 15
+      Top = 168
+      Width = 104
+      Caption = 'Select SQL filename'
+      ParentColor = False
+    end
+    object edtModifySqlFilename: TFileNameEdit
+      Left = 144
+      Height = 23
+      Top = 192
+      Width = 216
+      DialogTitle = 'Modify SQL file'
+      Filter = 'SQL files|*.sql'
+      FilterIndex = 0
+      DefaultExt = '*.sql'
+      HideDirectories = False
+      ButtonWidth = 23
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 6
+      OnChange = edtModifySqlFilenameChange
+    end
+    object Label11: TLabel
+      Left = 8
+      Height = 15
+      Top = 200
+      Width = 111
+      Caption = 'Modify SQL filename'
+      ParentColor = False
+    end
   end
   object Database: TIBDatabase
     Connected = False
@@ -236,7 +353,7 @@ object MainForm: TMainForm
       'rec_version'
       'nowait'
     )
-    Left = 632
+    Left = 656
     Top = 208
   end
   object qryRead: TIBSQL
@@ -256,7 +373,7 @@ object MainForm: TMainForm
     UniqueParamNames = False
     ParamCheck = True
     Transaction = trWrite
-    Left = 632
+    Left = 656
     Top = 152
   end
   object JSONPropStorage: TJSONPropStorage
