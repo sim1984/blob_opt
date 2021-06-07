@@ -199,7 +199,7 @@ object MainForm: TMainForm
       Left = 8
       Height = 15
       Top = 8
-      Width = 62
+      Width = 60
       Caption = 'Table name'
       ParentColor = False
     end

@@ -144,7 +144,9 @@ var
   ca: TCharArray;
   cb: TByteArray absolute ca;
   c: Byte;
+  xHexPrefix: string;
 begin
+  xHexPrefix := '';
   if FAutoBuildSql then
   begin
     qryRead.SQL.Text := BuildSelectSql;
@@ -233,6 +235,7 @@ begin
           begin
             if (FPKFieldName = 'DB_KEY') then
             begin
+              xHexPrefix := 'x';
               ca := idStr.ToCharArray;
               idBinary := '';
               for c in cb do
@@ -240,7 +243,7 @@ begin
             end
             else
               idBinary := idStr;
-            mmLog.Lines.Add('Key %s="%s". No change blob.', [FPKFieldName, idBinary]);
+            mmLog.Lines.Add('Key %s=%s''%s''. No change blob.', [FPKFieldName, xHexPrefix, idBinary]);
           end
         end;
         qryRead.Next;
@@ -272,6 +275,7 @@ begin
         begin
           if (FPKFieldName = 'DB_KEY') then
           begin
+            xHexPrefix := 'x';
             ca := idStr.ToCharArray;
             idBinary := '';
             for c in cb do
@@ -280,11 +284,11 @@ begin
           else
             idBinary := idStr;
           if (xBlobType = btSegmented) and (FBlobType = btStream) then
-            mmLog.Lines.Add('Key %s=%s. Convert segemented to streamed blob.', [FPKFieldName, idBinary])
+            mmLog.Lines.Add('Key %s=%s''%s''. Convert segemented to streamed blob.', [FPKFieldName, xHexPrefix, idBinary])
           else if (xBlobType = btStream) and (FBlobType = btSegmented) then
-            mmLog.Lines.Add('Key %s=%s. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, idBinary, FSegmentSize])
+            mmLog.Lines.Add('Key %s=%s''%s''. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize])
           else
-            mmLog.Lines.Add('Key %s=%s. Rewrite segmented blob with max segment size %d', [FPKFieldName, idBinary, FSegmentSize])
+            mmLog.Lines.Add('Key %s=%s''%s''. Rewrite segmented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize])
         end;
       end;
 
@@ -391,10 +395,10 @@ begin
             idBinary := '';
             for c in cb do
               idBinary := idBinary + IntToHex(c, 2);
-            mmLog.Lines.Add('Key %s="%s"; ReadTime: %8.3f ms;', [FPKFieldName, idBinary, xReadTime])
+            mmLog.Lines.Add('Key DB_KEY=x''%s''; ReadTime: %8.3f ms;', [idBinary, xReadTime])
           end
           else
-            mmLog.Lines.Add('Key %s="%s"; ReadTime: %8.3f ms;', [FPKFieldName, idStr, xReadTime]);
+            mmLog.Lines.Add('Key %s=''%s''; ReadTime: %8.3f ms;', [FPKFieldName, idStr, xReadTime]);
         end;
         mmLog.Lines.Add(
           'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
@@ -418,7 +422,7 @@ begin
             idBinary := '';
             for c in cb do
               idBinary := idBinary + IntToHex(c, 2);
-            mmLog.Lines.Add('Key %s="%s";', [FPKFieldName, idBinary])
+            mmLog.Lines.Add('Key DB_KEY=x''%s'';', [idBinary])
           end
           else
             mmLog.Lines.Add('Key %s="%s";', [FPKFieldName, idStr]);
