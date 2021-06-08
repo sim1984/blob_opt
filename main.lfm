@@ -1,10 +1,10 @@
 object MainForm: TMainForm
   Left = 308
-  Height = 542
+  Height = 586
   Top = 104
   Width = 826
   Caption = 'Optimizing BLOB fields'
-  ClientHeight = 542
+  ClientHeight = 586
   ClientWidth = 826
   OnCreate = FormCreate
   OnShow = FormShow
@@ -12,7 +12,7 @@ object MainForm: TMainForm
   object btnStart: TButton
     Left = 282
     Height = 33
-    Top = 488
+    Top = 544
     Width = 118
     Caption = 'Optimize'
     OnClick = btnStartClick
@@ -40,7 +40,7 @@ object MainForm: TMainForm
   object btnSave: TButton
     Left = 152
     Height = 33
-    Top = 488
+    Top = 544
     Width = 120
     Caption = 'Save settings'
     OnClick = btnSaveClick
@@ -49,7 +49,7 @@ object MainForm: TMainForm
   object btnStat: TButton
     Left = 16
     Height = 33
-    Top = 488
+    Top = 544
     Width = 123
     Caption = 'Analyze'
     OnClick = btnStatClick
@@ -180,11 +180,11 @@ object MainForm: TMainForm
   end
   object GroupBox1: TGroupBox
     Left = 432
-    Height = 264
+    Height = 248
     Top = 256
     Width = 376
     Caption = 'SQL Queries'
-    ClientHeight = 244
+    ClientHeight = 228
     ClientWidth = 372
     TabOrder = 12
     object edtTableName: TEdit
@@ -199,7 +199,7 @@ object MainForm: TMainForm
       Left = 8
       Height = 15
       Top = 8
-      Width = 60
+      Width = 62
       Caption = 'Table name'
       ParentColor = False
     end
@@ -317,6 +317,28 @@ object MainForm: TMainForm
       ParentColor = False
     end
   end
+  object edtLogDirectory: TDirectoryEdit
+    Left = 17
+    Height = 23
+    Top = 512
+    Width = 791
+    Directory = 'edtLogDirectory'
+    ShowHidden = False
+    ButtonWidth = 23
+    NumGlyphs = 1
+    MaxLength = 0
+    TabOrder = 13
+    OnClick = edtLogDirectoryClick
+    Text = 'edtLogDirectory'
+  end
+  object Label12: TLabel
+    Left = 17
+    Height = 15
+    Top = 493
+    Width = 70
+    Caption = 'Log directory'
+    ParentColor = False
+  end
   object Database: TIBDatabase
     Connected = False
     LoginPrompt = False
@@ -382,5 +404,17 @@ object MainForm: TMainForm
     Active = False
     Left = 496
     Top = 152
+  end
+  object EventLog: TEventLog
+    AppendContent = False
+    LogType = ltFile
+    Active = False
+    RaiseExceptionOnError = False
+    DefaultEventType = etCustom
+    CustomLogType = 0
+    EventIDOffset = 0
+    Paused = False
+    Left = 400
+    Top = 144
   end
 end

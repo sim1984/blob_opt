@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Spin,
-  JSONPropStorage, ExtCtrls, EditBtn, IBDatabase, Ib, IBSQL
+  JSONPropStorage, ExtCtrls, EditBtn, IBDatabase, Ib, IBSQL, eventlog
   {$ifdef WINDOWS}
   , Windows
   {$endif}
@@ -23,6 +23,7 @@ type
     cbxReadTimeStat: TCheckBox;
     cbxAutoBuildSql: TCheckBox;
     Database: TIBDatabase;
+    edtLogDirectory: TDirectoryEdit;
     edtBLOBFieldName: TEdit;
     edtPKFieldName: TEdit;
     edtRows: TSpinEdit;
@@ -34,11 +35,13 @@ type
     edtWhereFilter: TLabeledEdit;
     edtSelectSqlFilename: TFileNameEdit;
     edtModifySqlFilename: TFileNameEdit;
+    EventLog: TEventLog;
     GroupBox1: TGroupBox;
     JSONPropStorage: TJSONPropStorage;
     Label1: TLabel;
     Label10: TLabel;
     Label11: TLabel;
+    Label12: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
@@ -62,6 +65,7 @@ type
     procedure edtBLOBFieldNameChange(Sender: TObject);
     procedure edtCharsetChange(Sender: TObject);
     procedure edtDatabaseChange(Sender: TObject);
+    procedure edtLogDirectoryClick(Sender: TObject);
     procedure edtModifySqlFilenameChange(Sender: TObject);
     procedure edtPasswordChange(Sender: TObject);
     procedure edtPKFieldNameChange(Sender: TObject);
@@ -86,6 +90,7 @@ type
     FWhereFilter: string;
     FModifySqlFilename: string;
     FSelectSqlFilename: string;
+    FLogDirectory: string;
 
     function GetAppDir: string;
     function ReadBlobStat(ABlob: IBlob): Double;
@@ -123,7 +128,8 @@ begin
   JSONPropStorage.WriteBoolean('time_stat', FReadStatFlag);
   JSONPropStorage.WriteBoolean('auto_build_sql', FAutoBuildSql);
   JSONPropStorage.WriteString('table_name', FTableName);
-  JSONPropStorage.ReadInteger('rows_limit', FRowsLimit);
+  JSONPropStorage.WriteInteger('rows_limit', FRowsLimit);
+  JSONPropStorage.WriteString('log_dir', FLogDirectory);
   JSONPropStorage.WriteString('select_sql_filename', FSelectSqlFilename);
   JSONPropStorage.WriteString('modify_sql_filename', FModifySqlFilename);
   JSONPropStorage.Save;
@@ -146,38 +152,50 @@ var
   c: Byte;
   xHexPrefix: string;
 begin
-  xHexPrefix := '';
-  if FAutoBuildSql then
-  begin
-    qryRead.SQL.Text := BuildSelectSql;
-    qryWrite.SQL.Text := BuildModifySql;
-  end
-  else
-  begin
-    qryRead.SQL.LoadFromFile(FSelectSqlFileName);
-    qryWrite.SQL.LoadFromFile(FModifySqlFileName);
-  end;
+  DisabledControls;
+
+  EventLog.FileName := FLogDirectory + DirectorySeparator + 'optimize_' + FormatDateTime('YYYY-MM-DD-hh-nn-ss', Now) + '.log';
+  EventLog.Active := True;
+
+  EventLog.Info('Start optimize');
+  EventLog.Info('=========================================================');
 
   mmLog.Lines.Clear;
+  mmLog.Lines.Add('Start optimize');
+  mmLog.Lines.Add('=========================================================');
 
   try
+    xHexPrefix := '';
+    if FAutoBuildSql then
+    begin
+      qryRead.SQL.Text := BuildSelectSql;
+      qryWrite.SQL.Text := BuildModifySql;
+    end
+    else
+    begin
+      qryRead.SQL.LoadFromFile(FSelectSqlFileName);
+      qryWrite.SQL.LoadFromFile(FModifySqlFileName);
+    end;
+
     Database.Open;
   except
     on E: Exception do
     begin
       Application.ShowException(E);
+      EventLog.Error(E.Message);
+      EventLog.Active := False;
+      EnabledControls;
       Exit;
     end;
   end;
 
-  DisabledControls;
-
   if (Trim(FPKFieldName) = '') then
     FPKFieldName := 'DB_KEY';
 
-  trRead.StartTransaction;
-  trWrite.StartTransaction;
   try
+    trRead.StartTransaction;
+    trWrite.StartTransaction;
+
     qryWrite.Prepare;
     xKeyParam := qryWrite.ParamByName(FPKFieldName);
     if xKeyParam = nil then
@@ -194,6 +212,13 @@ begin
       trRead.Commit;
       trWrite.Rollback;
       EnabledControls;
+
+      mmLog.Lines.Add('=========================================================');
+      mmLog.Lines.Add('Finish optimize');
+
+      EventLog.Info('=========================================================');
+      EventLog.Info('Finish optimize');
+      EventLog.Active := False;
       Exit;
     end;
 
@@ -230,7 +255,10 @@ begin
         xReadBlob.Close;
         case xKeyField.GetSQLType of
           SQL_INT64, SQL_LONG, SQL_SHORT:
+          begin
             mmLog.Lines.Add('Key %s=%d. No change blob.', [FPKFieldName, id]);
+            EventLog.Info('Key %s=%d. No change blob.', [FPKFieldName, id]);
+          end
           else
           begin
             if (FPKFieldName = 'DB_KEY') then
@@ -244,6 +272,7 @@ begin
             else
               idBinary := idStr;
             mmLog.Lines.Add('Key %s=%s''%s''. No change blob.', [FPKFieldName, xHexPrefix, idBinary]);
+            EventLog.Info('Key %s=%s''%s''. No change blob.', [FPKFieldName, xHexPrefix, idBinary]);
           end
         end;
         qryRead.Next;
@@ -266,11 +295,20 @@ begin
       case xKeyField.GetSQLType of
         SQL_INT64, SQL_LONG, SQL_SHORT:
           if (xBlobType = btSegmented) and (FBlobType = btStream) then
-            mmLog.Lines.Add('Key %s=%d. Convert segemented to streamed blob.', [FPKFieldName, id])
+          begin
+            mmLog.Lines.Add('Key %s=%d. Convert segemented to streamed blob.', [FPKFieldName, id]);
+            EventLog.Info('Key %s=%d. Convert segemented to streamed blob.', [FPKFieldName, id]);
+          end
           else if (xBlobType = btStream) and (FBlobType = btSegmented) then
-            mmLog.Lines.Add('Key %s=%d. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, id, FSegmentSize])
+          begin
+            mmLog.Lines.Add('Key %s=%d. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, id, FSegmentSize]);
+            EventLog.Info('Key %s=%d. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, id, FSegmentSize])
+          end
           else
-            mmLog.Lines.Add('Key %s=%d. Rewrite segmented blob with max segment size %d', [FPKFieldName, id, FSegmentSize])
+          begin
+            mmLog.Lines.Add('Key %s=%d. Rewrite segmented blob with max segment size %d', [FPKFieldName, id, FSegmentSize]);
+            EventLog.Info('Key %s=%d. Rewrite segmented blob with max segment size %d', [FPKFieldName, id, FSegmentSize]);
+          end
         else
         begin
           if (FPKFieldName = 'DB_KEY') then
@@ -284,11 +322,20 @@ begin
           else
             idBinary := idStr;
           if (xBlobType = btSegmented) and (FBlobType = btStream) then
-            mmLog.Lines.Add('Key %s=%s''%s''. Convert segemented to streamed blob.', [FPKFieldName, xHexPrefix, idBinary])
+          begin
+            mmLog.Lines.Add('Key %s=%s''%s''. Convert segemented to streamed blob.', [FPKFieldName, xHexPrefix, idBinary]);
+            EventLog.Info('Key %s=%s''%s''. Convert segemented to streamed blob.', [FPKFieldName, xHexPrefix, idBinary]);
+          end
           else if (xBlobType = btStream) and (FBlobType = btSegmented) then
-            mmLog.Lines.Add('Key %s=%s''%s''. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize])
+          begin
+            mmLog.Lines.Add('Key %s=%s''%s''. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize]);
+            EventLog.Info('Key %s=%s''%s''. Convert streamed to segemented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize]);
+          end
           else
-            mmLog.Lines.Add('Key %s=%s''%s''. Rewrite segmented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize])
+          begin
+            mmLog.Lines.Add('Key %s=%s''%s''. Rewrite segmented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize]);
+            EventLog.Info('Key %s=%s''%s''. Rewrite segmented blob with max segment size %d', [FPKFieldName, xHexPrefix, idBinary, FSegmentSize]);
+          end
         end;
       end;
 
@@ -300,11 +347,19 @@ begin
     begin
       trWrite.Rollback;
       Application.ShowException(E);
+      EventLog.Error(E.Message);
     end;
   end;
   qryRead.Close;
   trRead.Commit;
   Database.Close();
+
+  mmLog.Lines.Add('=========================================================');
+  mmLog.Lines.Add('Finish optimize');
+
+  EventLog.Info('=========================================================');
+  EventLog.Info('Finish optimize');
+  EventLog.Active := False;
 
   EnabledControls;
 end;
@@ -326,26 +381,39 @@ var
   idBinary: string;
   xReadTime: Double;
 begin
-  if FAutoBuildSql then
-    qryRead.SQL.Text := BuildSelectSql
-  else
-    qryRead.SQL.LoadFromFile(FSelectSqlFileName);
+  DisabledControls;
+
+  EventLog.FileName := FLogDirectory + DirectorySeparator + 'analyze_' + FormatDateTime('YYYY-MM-DD-hh-nn-ss', Now) + '.log';
+  EventLog.Active := True;
+
+  EventLog.Info('Start analyze');
+  EventLog.Info('=========================================================');
 
   mmLog.Lines.Clear;
+  mmLog.Lines.Add('Start analyze');
+  mmLog.Lines.Add('=========================================================');
 
   try
+    if FAutoBuildSql then
+      qryRead.SQL.Text := BuildSelectSql
+    else
+      qryRead.SQL.LoadFromFile(FSelectSqlFileName);
+
     Database.Open;
   except
     on E: Exception do
     begin
       Application.ShowException(E);
+      EventLog.Error(E.Message);
+      EventLog.Active := False;
+      DisabledControls;
       Exit;
     end;
   end;
-  DisabledControls;
-  trRead.StartTransaction;
 
   try
+    trRead.StartTransaction;
+
     qryRead.ExecQuery;
     if (Trim(FPKFieldName) = '') then
       FPKFieldName := 'DB_KEY';
@@ -354,6 +422,12 @@ begin
     begin
       trRead.Commit;
       EnabledControls;
+      mmLog.Lines.Add('=========================================================');
+      mmLog.Lines.Add('Finish analyze');
+
+      EventLog.Info('=========================================================');
+      EventLog.Info('Finish analyze');
+      EventLog.Active := False;
       Exit;
     end;
     xKeyField := qryRead.FieldByName(FPKFieldName);
@@ -388,17 +462,24 @@ begin
         xReadTime := ReadBlobStat(xReadBlob);
         case xKeyField.GetSQLType of
           SQL_INT64, SQL_LONG, SQL_SHORT:
+          begin
             mmLog.Lines.Add('Key %s=%d; ReadTime: %8.3f ms;', [FPKFieldName, id, xReadTime]);
+            EventLog.Info('Key %s=%d; ReadTime: %8.3f ms;', [FPKFieldName, id, xReadTime]);
+          end
           else if (FPKFieldName = 'DB_KEY') then
           begin
             ca := idStr.ToCharArray;
             idBinary := '';
             for c in cb do
               idBinary := idBinary + IntToHex(c, 2);
-            mmLog.Lines.Add('Key DB_KEY=x''%s''; ReadTime: %8.3f ms;', [idBinary, xReadTime])
+            mmLog.Lines.Add('Key DB_KEY=x''%s''; ReadTime: %8.3f ms;', [idBinary, xReadTime]);
+            EventLog.Info('Key DB_KEY=x''%s''; ReadTime: %8.3f ms;', [idBinary, xReadTime]);
           end
           else
+          begin
             mmLog.Lines.Add('Key %s=''%s''; ReadTime: %8.3f ms;', [FPKFieldName, idStr, xReadTime]);
+            EventLog.Info('Key %s=''%s''; ReadTime: %8.3f ms;', [FPKFieldName, idStr, xReadTime]);
+          end;
         end;
         mmLog.Lines.Add(
           'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
@@ -409,20 +490,34 @@ begin
             sBlobTypes[xBlobType]
           ]
         );
+        EventLog.Info(
+          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
+          [
+            xNumSegments,
+            xMaxSegmentSize,
+            xTotalSize,
+            sBlobTypes[xBlobType]
+          ]
+        );
         mmLog.Lines.Add('');
+        EventLog.Info('');
       end
       else
       begin
         case xKeyField.GetSQLType of
           SQL_INT64, SQL_LONG, SQL_SHORT:
+          begin
             mmLog.Lines.Add('Key %s=%d;', [FPKFieldName, id]);
+            EventLog.Info('Key %s=%d;', [FPKFieldName, id]);
+          end
           else if (FPKFieldName = 'DB_KEY') then
           begin
             ca := idStr.ToCharArray;
             idBinary := '';
             for c in cb do
               idBinary := idBinary + IntToHex(c, 2);
-            mmLog.Lines.Add('Key DB_KEY=x''%s'';', [idBinary])
+            mmLog.Lines.Add('Key DB_KEY=x''%s'';', [idBinary]);
+            EventLog.Info('Key DB_KEY=x''%s'';', [idBinary]);
           end
           else
             mmLog.Lines.Add('Key %s="%s";', [FPKFieldName, idStr]);
@@ -436,7 +531,17 @@ begin
             sBlobTypes[xBlobType]
           ]
         );
+        EventLog.Info(
+          'NumSegments: %d; MaxSegmentSize: %d; TotalSize: %d; BlobType: %s;',
+          [
+            xNumSegments,
+            xMaxSegmentSize,
+            xTotalSize,
+            sBlobTypes[xBlobType]
+          ]
+        );
         mmLog.Lines.Add('');
+        EventLog.Info('');
       end;
       xReadBlob.Close;
       qryRead.Next;
@@ -445,12 +550,20 @@ begin
     on E: Exception do
     begin
       Application.ShowException(E);
+      EventLog.Error(E.Message);
     end;
   end;
   qryRead.Close;
   trRead.Commit;
   Database.Close();
   EnabledControls;
+
+  mmLog.Lines.Add('=========================================================');
+  mmLog.Lines.Add('Finish analyze');
+
+  EventLog.Info('=========================================================');
+  EventLog.Info('Finish analyze');
+  EventLog.Active := False;
 end;
 
 procedure TMainForm.cbxAutoBuildSqlChange(Sender: TObject);
@@ -481,6 +594,11 @@ end;
 procedure TMainForm.edtDatabaseChange(Sender: TObject);
 begin
   Database.DatabaseName := edtDatabase.Text;
+end;
+
+procedure TMainForm.edtLogDirectoryClick(Sender: TObject);
+begin
+  FLogDirectory := edtLogDirectory.Directory;
 end;
 
 procedure TMainForm.edtModifySqlFilenameChange(Sender: TObject);
@@ -555,6 +673,7 @@ begin
   edtRows.Enabled := FAutoBuildSql;
   edtWhereFilter.Text := FWhereFilter;
   edtWhereFilter.Enabled := FAutoBuildSql;
+  edtLogDirectory.Directory := FLogDirectory;
   edtSelectSqlFileName.FileName := FSelectSqlFilename;
   edtModifySqlFileName.Filename := FModifySqlFilename;
   edtSelectSqlFileName.Enabled := not FAutoBuildSql;
@@ -661,15 +780,11 @@ begin
   FAutoBuildSql := JSONPropStorage.ReadBoolean('auto_build_sql', true);
   FTableName := JSONPropStorage.ReadString('table_name', '');
   FWhereFilter := JSONPropStorage.ReadString('where_filter', '');
-  FSelectSqlFilename := JSONPropStorage.ReadString('select_sql_filename', AppDir + '/select.sql');
-  FModifySqlFilename := JSONPropStorage.ReadString('modify_sql_filename', AppDir + '/modify.sql');
+  FLogDirectory := JSONPropStorage.ReadString('log_dir', AppDir);
+  FSelectSqlFilename := JSONPropStorage.ReadString('select_sql_filename', AppDir + DirectorySeparator + 'select.sql');
+  FModifySqlFilename := JSONPropStorage.ReadString('modify_sql_filename', AppDir + DirectorySeparator + 'modify.sql');
   Database.DatabaseName := JSONPropStorage.ReadString('database_name', '');
   JSONPropStorage.ReadStrings('database_params', Database.Params);
-
-  if not FAutoBuildSql then
-  begin
-    qryWrite.SQL.LoadFromFile(AppDir + '/modify.sql');
-  end;
 end;
 
 function TMainForm.ConvertBlob(ABlob: IBlob): IBlob;
@@ -759,6 +874,7 @@ begin
   edtTableName.Enabled := FAutoBuildSql;
   edtRows.Enabled := FAutoBuildSql;
   edtWhereFilter.Enabled := FAutoBuildSql;
+  edtLogDirectory.Enabled := True;
   edtSelectSqlFilename.Enabled := not FAutoBuildSql;
   edtModifySqlFilename.Enabled := not FAutoBuildSql;
   case FBlobType of
@@ -783,6 +899,7 @@ begin
   cbxAutoBuildSql.Enabled := False;
   edtTableName.Enabled := False;
   edtRows.Enabled := False;
+  edtLogDirectory.Enabled := False;
   edtWhereFilter.Enabled := False;
   edtSelectSqlFilename.Enabled := False;
   edtModifySqlFilename.Enabled := False;
