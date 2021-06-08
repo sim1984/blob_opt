@@ -1,6 +1,8 @@
 unit main;
 
 {$mode objfpc}{$H+}
+{.$define blobopt}
+
 
 interface
 
@@ -17,7 +19,7 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
-    btnStart: TButton;
+    btnOptimize: TButton;
     btnSave: TButton;
     btnStat: TButton;
     cbxReadTimeStat: TCheckBox;
@@ -40,10 +42,10 @@ type
     JSONPropStorage: TJSONPropStorage;
     Label1: TLabel;
     Label10: TLabel;
-    Label11: TLabel;
+    lblModifySqlFilename: TLabel;
     Label12: TLabel;
     Label2: TLabel;
-    Label3: TLabel;
+    lblSegmentSize: TLabel;
     Label4: TLabel;
     Label5: TLabel;
     Label6: TLabel;
@@ -58,7 +60,7 @@ type
     trRead: TIBTransaction;
     trWrite: TIBTransaction;
     procedure btnSaveClick(Sender: TObject);
-    procedure btnStartClick(Sender: TObject);
+    procedure btnOptimizeClick(Sender: TObject);
     procedure btnStatClick(Sender: TObject);
     procedure cbxAutoBuildSqlChange(Sender: TObject);
     procedure cbxReadTimeStatChange(Sender: TObject);
@@ -135,7 +137,7 @@ begin
   JSONPropStorage.Save;
 end;
 
-procedure TMainForm.btnStartClick(Sender: TObject);
+procedure TMainForm.btnOptimizeClick(Sender: TObject);
 var
   xReadBlob: IBlob;
   xWriteBlob: IBlob;
@@ -654,6 +656,15 @@ end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
+  {$ifndef blobopt}
+  edtSegmentSize.Visible := False;
+  rbBlobType.Visible := False;
+  edtModifySqlFileName.Visible := False;
+  btnOptimize.Visible := False;
+  lblSegmentSize.Visible := False;
+  lblModifySqlFilename.Visible := False;
+  {$endif}
+
   edtSelectSqlFileName.InitialDir := AppDir;
   edtModifySqlFileName.InitialDir := AppDir;
   ReadSettings;
@@ -867,7 +878,7 @@ begin
   edtPKFieldName.Enabled := True;
   edtBLOBFieldName.Enabled := True;
   btnStat.Enabled := True;
-  btnStart.Enabled := True;
+  btnOptimize.Enabled := True;
   btnSave.Enabled := True;
   rbBlobType.Enabled := True;
   cbxAutoBuildSql.Enabled := True;
@@ -892,7 +903,7 @@ begin
   edtPKFieldName.Enabled := False;
   edtBLOBFieldName.Enabled := False;
   btnStat.Enabled := False;
-  btnStart.Enabled := False;
+  btnOptimize.Enabled := False;
   btnSave.Enabled := False;
   rbBlobType.Enabled := False;
   edtSegmentSize.Enabled := False;

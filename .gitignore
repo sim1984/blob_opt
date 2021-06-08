@@ -4,5 +4,6 @@
 *.o
 *.obj
 *.ppu
+*.log
 /lib
 /backup

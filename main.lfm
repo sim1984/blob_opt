@@ -9,16 +9,16 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '2.0.12.0'
-  object btnStart: TButton
+  object btnOptimize: TButton
     Left = 282
     Height = 33
     Top = 544
     Width = 118
     Caption = 'Optimize'
-    OnClick = btnStartClick
+    OnClick = btnOptimizeClick
     TabOrder = 0
   end
-  object Label3: TLabel
+  object lblSegmentSize: TLabel
     Left = 16
     Height = 15
     Top = 432
@@ -199,7 +199,7 @@ object MainForm: TMainForm
       Left = 8
       Height = 15
       Top = 8
-      Width = 62
+      Width = 60
       Caption = 'Table name'
       ParentColor = False
     end
@@ -308,7 +308,7 @@ object MainForm: TMainForm
       TabOrder = 6
       OnChange = edtModifySqlFilenameChange
     end
-    object Label11: TLabel
+    object lblModifySqlFilename: TLabel
       Left = 8
       Height = 15
       Top = 200
