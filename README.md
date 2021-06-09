@@ -120,5 +120,9 @@ NumSegments: 55; MaxSegmentSize: 65535; TotalSize: 3562695; BlobType: Segmented;
 
 ## Ссылки для скачивания утилиты blob_opt
 
-Исполняемый файл можно скачать по ссылке [blob_optimize.exe](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize.exe)
+Исполняемые файлы можно скачать по ссылкам 
+
+* [blob_optimize_x86.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x86.zip)
+
+* [blob_optimize_x64.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x64.zip)
 
