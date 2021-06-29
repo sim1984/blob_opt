@@ -10,7 +10,11 @@
       "blob_type" : "1",
       "blob_field" : "paper",
       "pk_field" : "paperid",
-      "time_stat" : "1"
+      "time_stat" : "1",
+      "auto_build_sql" : "1",
+      "table_name" : "wnppaper",
+      "select_sql_filename" : "D:\\IBase\\blob_opt\\select.sql",
+      "modify_sql_filename" : "D:\\IBase\\blob_opt\\modify.sql"
     }
   }
 }

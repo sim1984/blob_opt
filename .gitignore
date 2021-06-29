@@ -5,6 +5,9 @@
 *.obj
 *.ppu
 *.log
-/lib
-/backup
-/output
+/console/lib
+/console/backup
+/console/output
+/gui/lib
+/gui/backup
+/gui/output

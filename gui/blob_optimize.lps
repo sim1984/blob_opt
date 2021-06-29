@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="11"/>
     <BuildModes Active="Default"/>
-    <Units Count="26">
+    <Units Count="27">
       <Unit0>
         <Filename Value="blob_optimize.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -21,8 +21,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="648"/>
-        <CursorPos X="60" Y="669"/>
+        <TopLine Value="158"/>
+        <CursorPos X="3" Y="157"/>
         <UsageCount Value="54"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -197,124 +197,136 @@
         <CursorPos X="20" Y="44"/>
         <UsageCount Value="10"/>
       </Unit25>
+      <Unit26>
+        <Filename Value="C:\Users\Denis\AppData\Local\lazarus\onlinepackagemanager\packages\ibx\runtime\nongui\IBDatabase.pas"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="1050"/>
+        <CursorPos Y="1066"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit26>
     </Units>
-    <JumpHistory Count="29" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="main.pas"/>
-        <Caret Line="240" Column="37" TopLine="16"/>
+        <Caret Line="193" Column="60" TopLine="184"/>
       </Position1>
       <Position2>
         <Filename Value="main.pas"/>
-        <Caret Line="292" Column="36" TopLine="282"/>
+        <Caret Line="267" Column="19" TopLine="251"/>
       </Position2>
       <Position3>
         <Filename Value="main.pas"/>
-        <Caret Line="224" Column="30" TopLine="68"/>
+        <Caret Line="701" Column="80" TopLine="670"/>
       </Position3>
       <Position4>
         <Filename Value="main.pas"/>
-        <Caret Line="249" Column="72" TopLine="169"/>
+        <Caret Line="702" Column="80" TopLine="671"/>
       </Position4>
       <Position5>
         <Filename Value="main.pas"/>
-        <Caret Line="307" TopLine="284"/>
+        <Caret Line="703" Column="80" TopLine="672"/>
       </Position5>
       <Position6>
         <Filename Value="main.pas"/>
-        <Caret Line="262" Column="127" TopLine="213"/>
+        <Caret Line="670" Column="21" TopLine="658"/>
       </Position6>
       <Position7>
         <Filename Value="main.pas"/>
-        <Caret Line="235" Column="60" TopLine="226"/>
+        <Caret Line="679" Column="67" TopLine="645"/>
       </Position7>
       <Position8>
         <Filename Value="main.pas"/>
-        <Caret Line="230" Column="60" TopLine="119"/>
+        <Caret Line="93" Column="18" TopLine="73"/>
       </Position8>
       <Position9>
         <Filename Value="main.pas"/>
-        <Caret Line="316" TopLine="305"/>
+        <Caret Line="487" Column="88" TopLine="470"/>
       </Position9>
       <Position10>
         <Filename Value="main.pas"/>
-        <Caret Line="193" Column="60" TopLine="184"/>
+        <Caret Line="781" Column="69" TopLine="655"/>
       </Position10>
       <Position11>
         <Filename Value="main.pas"/>
-        <Caret Line="267" Column="19" TopLine="251"/>
+        <Caret Line="239" Column="13" TopLine="132"/>
       </Position11>
       <Position12>
         <Filename Value="main.pas"/>
-        <Caret Line="701" Column="80" TopLine="670"/>
+        <Caret Line="338" Column="32" TopLine="322"/>
       </Position12>
       <Position13>
         <Filename Value="main.pas"/>
-        <Caret Line="702" Column="80" TopLine="671"/>
+        <Caret Line="9" Column="62"/>
       </Position13>
       <Position14>
         <Filename Value="main.pas"/>
-        <Caret Line="703" Column="80" TopLine="672"/>
+        <Caret Line="330" Column="68" TopLine="320"/>
       </Position14>
       <Position15>
         <Filename Value="main.pas"/>
-        <Caret Line="670" Column="21" TopLine="658"/>
+        <Caret Line="158" Column="32" TopLine="79"/>
       </Position15>
       <Position16>
         <Filename Value="main.pas"/>
-        <Caret Line="679" Column="67" TopLine="645"/>
+        <Caret Line="339" Column="57" TopLine="326"/>
       </Position16>
       <Position17>
         <Filename Value="main.pas"/>
-        <Caret Line="93" Column="18" TopLine="73"/>
+        <Caret Line="160" TopLine="151"/>
       </Position17>
       <Position18>
         <Filename Value="main.pas"/>
-        <Caret Line="487" Column="88" TopLine="470"/>
+        <Caret Line="359" Column="53" TopLine="344"/>
       </Position18>
       <Position19>
         <Filename Value="main.pas"/>
-        <Caret Line="781" Column="69" TopLine="655"/>
+        <Caret Line="33" Column="78"/>
       </Position19>
       <Position20>
         <Filename Value="main.pas"/>
-        <Caret Line="239" Column="13" TopLine="132"/>
+        <Caret Line="665" Column="37" TopLine="657"/>
       </Position20>
       <Position21>
         <Filename Value="main.pas"/>
-        <Caret Line="338" Column="32" TopLine="322"/>
+        <Caret Line="98" Column="22" TopLine="82"/>
       </Position21>
       <Position22>
         <Filename Value="main.pas"/>
-        <Caret Line="9" Column="62"/>
+        <Caret Line="728" Column="59" TopLine="714"/>
       </Position22>
       <Position23>
         <Filename Value="main.pas"/>
-        <Caret Line="330" Column="68" TopLine="320"/>
+        <Caret Line="103" Column="20" TopLine="80"/>
       </Position23>
       <Position24>
         <Filename Value="main.pas"/>
-        <Caret Line="158" Column="32" TopLine="79"/>
+        <Caret Line="11" Column="76"/>
       </Position24>
       <Position25>
         <Filename Value="main.pas"/>
-        <Caret Line="339" Column="57" TopLine="326"/>
+        <Caret Line="823" Column="45" TopLine="636"/>
       </Position25>
       <Position26>
         <Filename Value="main.pas"/>
-        <Caret Line="160" TopLine="151"/>
+        <Caret Line="404" TopLine="379"/>
       </Position26>
       <Position27>
-        <Filename Value="main.pas"/>
-        <Caret Line="359" Column="53" TopLine="344"/>
+        <Filename Value="C:\Users\Denis\AppData\Local\lazarus\onlinepackagemanager\packages\ibx\runtime\nongui\IBDatabase.pas"/>
+        <Caret Line="1066" TopLine="1050"/>
       </Position27>
       <Position28>
         <Filename Value="main.pas"/>
-        <Caret Line="33" Column="78"/>
+        <Caret Line="408" TopLine="396"/>
       </Position28>
       <Position29>
         <Filename Value="main.pas"/>
-        <Caret Line="665" Column="37" TopLine="657"/>
+        <Caret Line="409" TopLine="396"/>
       </Position29>
+      <Position30>
+        <Filename Value="main.pas"/>
+        <Caret Line="404" Column="58" TopLine="587"/>
+      </Position30>
     </JumpHistory>
     <RunParams>
       <FormatVersion Value="2"/>

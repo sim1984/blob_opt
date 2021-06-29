@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Spin,
-  JSONPropStorage, ExtCtrls, EditBtn, IBDatabase, Ib, IBSQL, eventlog
+  JSONPropStorage, ExtCtrls, EditBtn, IBDatabase, Ib, IBSQL, eventlog, Math
   {$ifdef WINDOWS}
   , Windows
   {$endif}
@@ -408,7 +408,7 @@ begin
       Application.ShowException(E);
       EventLog.Error(E.Message);
       EventLog.Active := False;
-      DisabledControls;
+      EnabledControls;
       Exit;
     end;
   end;
@@ -802,70 +802,38 @@ function TMainForm.ConvertBlob(ABlob: IBlob): IBlob;
 var
   xBPB: IBPB;
   xReadSize: Longint;
-  xStream: TBytesStream;
-  xStreamReadSize: Longint;
-  xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
+  xWriteSize: Longint;
+  xWriteCounter: Longint;
+  xBuffer: array[0.. MAX_SEGMENT_SIZE] of Byte;
 begin
-  xStream := nil;
   xBPB := nil;
   if (FBlobType = btStream) then
   begin
     xBPB := Database.Attachment.AllocateBPB;
     xBPB.Add(isc_bpb_type).AsByte:=isc_bpb_type_stream;
-  end
-  else
-  begin
-    xStream := TBytesStream.create();
   end;
   Result := Database.Attachment.CreateBlob(trWrite.TransactionIntf, ABlob.GetSubType, ABlob.GetCharsetId,  xBPB);
   xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   while (xReadSize > 0) do
   begin
-    if (FBlobType = btStream) then
+    if FBlobType = btStream then
     begin
+      // the stream blob is rewritten with the same size as read
       Result.Write(xBuffer, xReadSize);
     end
     else
     begin
-      xStream.Write(xBuffer, xReadSize); // remainder + xReadSize
-      // when the size exceeds the maximum segment size
-      if (xStream.Size >= FSegmentSize) then
+      // segmented blob rewrite with new segment size
+      xWriteSize := 0;
+      xWriteCounter := 0;
+      while (xReadSize > xWriteCounter) do
       begin
-        xStream.Position := 0;
-        // read the size of the new segment and write to the blob
-        xStreamReadSize := xStream.Read(xBuffer, FSegmentSize);
-        while (xStreamReadSize = FSegmentSize) do
-        begin
-          // write it to a new blob
-          Result.Write(xBuffer, xStreamReadSize);
-          xStreamReadSize := xStream.Read(xBuffer, FSegmentSize);
-        end;
-
-        // flush the stream and write this buffer back
-        if xStreamReadSize > 0 then
-        begin
-          xStream.Clear;
-          xStream.Write(xBuffer, xStreamReadSize);
-        end;
-      end
-      else
-      begin
-        Result.Write(xBuffer, xReadSize);
-        xStream.Clear;
+        xWriteSize := Result.Write((@xBuffer[0] + xWriteCounter)^, Min(xReadSize - xWriteCounter, FSegmentSize));
+        xWriteCounter := xWriteCounter +  xWriteSize;
       end;
     end;
-    // and continue reading blob
+    // continue reading blob
     xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
-  end;
-  if Assigned(xStream) then
-  begin
-    xStream.Position := 0;
-    if xStream.Size > 0 then
-    begin
-      xReadSize := xStream.Write(xBuffer, xStream.Size);
-      Result.Write(xBuffer, xReadSize);
-    end;
-    xStream.Free;
   end;
 end;
 

@@ -1,0 +1,1 @@
+BlobOpt.exe --database=localhost/3052:f:\fbdata\2.5\NEWDEMO.FDB --user=SYSDBA --password=masterkey --table=wnppaper --blobfield=paper --analyze --readstat --rows=10
