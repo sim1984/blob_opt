@@ -6,7 +6,7 @@ uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
-  Classes, SysUtils, CustApp, IB, IBDatabase, IbSql, Math
+  Classes, SysUtils, CustApp, IB, Math
   {$ifdef WINDOWS}
   , Windows
   {$endif}
@@ -29,7 +29,6 @@ type
     FTableName: string;
     FBlobFieldName: string;
     FKeyFieldName: string;
-    FDatabase: TIBDatabase;
     FWhereFilter: string;
     FRowsLimit: Integer;
     FReadStatFlag: Boolean;
@@ -39,11 +38,11 @@ type
     FSegmentSize: Integer;
   protected
     procedure DoRun; override;
-    procedure ConnectDB;
+    function ConnectDB: IAttachment;
     function BuildSelectSql: string;
     function BuildModifySql: string;
     function ReadBlobStat(ABlob: IBlob): Double;
-    function ConvertBlob(ABlob: IBlob; AWriteTransaction: ITransaction): IBlob;
+    function ConvertBlob(ABlob: IBlob; AAttachment: IAttachment; AWriteTransaction: ITransaction): IBlob;
   public
     constructor Create(TheOwner: TComponent); override;
     destructor Destroy; override;
@@ -141,18 +140,22 @@ begin
   Terminate;
 end;
 
-procedure TBlobOptApp.ConnectDB;
+function TBlobOptApp.ConnectDB: IAttachment;
+var
+  xDPB: IDPB;
 begin
-  FDatabase.DatabaseName := FDatabaseName;
-  FDatabase.LoginPrompt := False;
-  FDatabase.Params.Values['user_name'] := FUser;
+  xDPB := FirebirdAPI.AllocateDPB;
+  xDPB.Add(isc_dpb_user_name).AsString := FUser;
   if (FPassword <> '') then
-    FDatabase.Params.Values['password'] := FPassword;
-  if (FCharsetName <> '') then
-    FDatabase.Params.Values['lc_ctype'] := FCharsetName;
+    xDPB.Add(isc_dpb_password).AsString := FPassword;
   if (FRole <> '') then
-    FDatabase.Params.Values['role_name'] := FRole;
-  FDatabase.Open;
+    xDPB.Add(isc_dpb_sql_role_name).AsString := FRole;
+  if (FCharsetName <> '') then
+    xDPB.Add(isc_dpb_lc_ctype).AsString := FCharsetName;
+  xDPB.Add(isc_dpb_set_db_SQL_dialect).AsByte := 3;
+
+  Result := FirebirdAPI.OpenDatabase(FDatabaseName, xDPB);
+  xDPB := nil;
 end;
 
 function TBlobOptApp.BuildSelectSql: string;
@@ -202,6 +205,7 @@ begin
     Result := Result + Trim(FKeyFieldName) + ' = :' + Trim(FKeyFieldName);
 end;
 
+{$ifdef WINDOWS}
 function TBlobOptApp.ReadBlobStat(ABlob: IBlob): Double;
 var
   xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
@@ -222,8 +226,14 @@ begin
 
   Result := 1000.0 * (T2 - T1) / iCounterPerSec;
 end;
+{$else}
+function TBlobOptApp.ReadBlobStat(ABlob: IBlob): Double;
+begin
+  Result := 0;
+end;
+{$endif}
 
-function TBlobOptApp.ConvertBlob(ABlob: IBlob; AWriteTransaction: ITransaction): IBlob;
+function TBlobOptApp.ConvertBlob(ABlob: IBlob; AAttachment: IAttachment; AWriteTransaction: ITransaction): IBlob;
 var
   xBPB: IBPB;
   xReadSize: Longint;
@@ -234,10 +244,10 @@ begin
   xBPB := nil;
   if (FBlobType = btStream) then
   begin
-    xBPB := FDatabase.Attachment.AllocateBPB;
+    xBPB := AAttachment.AllocateBPB;
     xBPB.Add(isc_bpb_type).AsByte:=isc_bpb_type_stream;
   end;
-  Result := FDatabase.Attachment.CreateBlob(AWriteTransaction, ABlob.GetSubType, ABlob.GetCharsetId,  xBPB);
+  Result := AAttachment.CreateBlob(AWriteTransaction, ABlob.GetSubType, ABlob.GetCharsetId,  xBPB);
   xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
   while (xReadSize > 0) do
   begin
@@ -265,7 +275,6 @@ end;
 constructor TBlobOptApp.Create(TheOwner: TComponent);
 begin
   inherited Create(TheOwner);
-  FDatabase := TIBDatabase.Create(Self);
   FRowsLimit := -1;
   StopOnException:=True;
 end;
@@ -310,12 +319,14 @@ procedure TBlobOptApp.Analyze;
 const
   sBlobTypes: array[btSegmented .. btStream] of string = ('Segmented', 'Stream');
 var
+  xAttachment: IAttachment;
+  xReadTransaction: ITransaction;
+  xSelectQuery: IStatement;
+  xResultSet: IResultSet;
   xReadBlob: IBlob;
   xNumSegments: Int64;
   xMaxSegmentSize, xTotalSize: Int64;
   xBlobType: TBlobType;
-  xReadTransaction: TIbTransaction;
-  xSelectQuery: TIbSql;
   xKeyField, xBlobField: ISQLData;
   id: Int64;
   idStr: string;
@@ -325,42 +336,41 @@ var
   idBinary: string;
   xReadTime: Double;
   stat: string;
+  xSQL: string;
+  xStrings: TStrings;
 begin
-  ConnectDB;
-  xReadTransaction := TIbTransaction.Create(Self);
-  xReadTransaction.DefaultDatabase := FDatabase;
-  xSelectQuery := TIbSql.create(Self);
-  xSelectQuery.Transaction := xReadTransaction;
+  xAttachment := ConnectDB;
+  xReadTransaction := xAttachment.StartTransaction([isc_tpb_read, isc_tpb_nowait, isc_tpb_concurrency], taCommit);
   try
     if (FSelectFileName <> '') then
-      xSelectQuery.SQL.LoadFromFile(FSelectFileName)
+    begin
+      xStrings := TStringList.Create;
+      try
+        xStrings.LoadFromFile(FSelectFileName);
+        xSQL := xStrings.Text;
+      finally
+        xStrings.Free;
+      end;
+    end
     else
-       xSelectQuery.SQL.Text := BuildSelectSql;
+       xSQL := BuildSelectSql;
+    xSelectQuery := xAttachment.Prepare(xReadTransaction, xSQL);
     Writeln;
     Writeln('Start analyze');
-    xReadTransaction.StartTransaction;
-    xSelectQuery.ExecQuery;
-    if xSelectQuery.Eof then
-    begin
-      Writeln;
-      Writeln('Finish analyze');
-      Exit;
-    end;
-    xKeyField := xSelectQuery.FieldByName(FKeyFieldName);
-    if xKeyField = nil then
-      raise Exception.CreateFmt('Field %s not found', [FKeyFieldName]);
+    xResultSet := xSelectQuery.OpenCursor(xReadTransaction);
 
-    xBlobField := xSelectQuery.FieldByName(FBlobFieldName);
-    if xBlobField = nil then
-      raise Exception.CreateFmt('Field %s not found', [FBlobFieldName]);
-
-    while not xSelectQuery.Eof do
+    while xResultSet.FetchNext do
     begin
+      xKeyField := xResultSet.ByName(FKeyFieldName);
+      if xKeyField = nil then
+        raise Exception.CreateFmt('Field %s not found', [FKeyFieldName]);
+
+      xBlobField := xResultSet.ByName(FBlobFieldName);
+      if xBlobField = nil then
+        raise Exception.CreateFmt('Field %s not found', [FBlobFieldName]);
+
       if (xBlobField.IsNull) then
-      begin
-        xSelectQuery.Next;
         continue;
-      end;
 
       case xKeyField.GetSQLType of
         SQL_INT64, SQL_LONG, SQL_SHORT:
@@ -406,13 +416,15 @@ begin
         ]
       ));
       xReadBlob.Close;
-      xSelectQuery.Next;
+      xReadBlob := nil;
     end;
-    xSelectQuery.Close;
+    xResultSet.Close;
   finally
-    xSelectQuery.Free;
-    xReadTransaction.Rollback;
-    xReadTransaction.Free;
+    xSelectQuery := nil;
+    xReadTransaction.Commit;
+    xReadTransaction := nil;
+    xAttachment.Disconnect();
+    xAttachment := nil;
   end;
   Writeln;
   Writeln('Finish analyze');
@@ -420,10 +432,11 @@ end;
 
 procedure TBlobOptApp.Optimize;
 var
-  xReadTransaction: TIbTransaction;
-  xWriteTransaction: TIbTransaction;
-  xSelectQuery: TIbSql;
-  xModifyQuery: TIbSql;
+  xAttachment: IAttachment;
+  xReadTransaction, xWriteTransaction: ITransaction;
+  xSelectQuery, xModifyQuery: IStatement;
+  xResultSet: IResultSet;
+  xReadBlob, xWriteBlob: IBlob;
   xKeyField, xBlobField: ISQLData;
   xKeyParam, xBlobParam: ISQLParam;
   id: Int64;
@@ -432,69 +445,69 @@ var
   xNumSegments: Int64;
   xMaxSegmentSize, xTotalSize: Int64;
   xBlobType: TBlobType;
-  xReadBlob: IBlob;
-  xWriteBlob: IBlob;
   xHexPrefix: string;
   ca: TCharArray;
   cb: TByteArray absolute ca;
   c: Byte;
+  xStrings: TStrings;
+  xSQL: string;
 begin
-  ConnectDB;
-  xReadTransaction := TIbTransaction.Create(Self);
-  xReadTransaction.DefaultDatabase := FDatabase;
-  xWriteTransaction := TIbTransaction.Create(Self);
-  xWriteTransaction.DefaultDatabase := FDatabase;
-  xSelectQuery := TIbSql.create(Self);
-  xSelectQuery.Transaction := xReadTransaction;
-  xModifyQuery := TIbSql.create(Self);
-  xModifyQuery.Transaction := xWriteTransaction;
+  xAttachment := ConnectDB;
+  xReadTransaction := xAttachment.StartTransaction([isc_tpb_read, isc_tpb_nowait, isc_tpb_concurrency], taCommit);
+  xWriteTransaction := xAttachment.StartTransaction([isc_tpb_write, isc_tpb_nowait, isc_tpb_concurrency], taRollback);
+
   try
     if (FSelectFileName <> '') then
-      xSelectQuery.SQL.LoadFromFile(FSelectFileName)
+    begin
+      xStrings := TStringList.Create;
+      try
+        xStrings.LoadFromFile(FSelectFileName);
+        xSQL := xStrings.Text;
+      finally
+        xStrings.Free;
+      end;
+    end
     else
-      xSelectQuery.SQL.Text := BuildSelectSql;
+       xSQL := BuildSelectSql;
+    xSelectQuery := xAttachment.Prepare(xReadTransaction, xSQL);
 
     if (FModifyFileName <> '') then
-      xModifyQuery.SQL.LoadFromFile(FModifyFileName)
+    begin
+      xStrings := TStringList.Create;
+      try
+        xStrings.LoadFromFile(FModifyFileName);
+        xSQL := xStrings.Text;
+      finally
+        xStrings.Free;
+      end;
+    end
     else
-      xModifyQuery.SQL.Text := BuildModifySql;
+       xSQL := BuildModifySql;
+    xModifyQuery := xAttachment.Prepare(xWriteTransaction, xSQL);
 
     Writeln;
     Writeln('Start optimize');
-    xReadTransaction.StartTransaction;
-    xWriteTransaction.StartTransaction;
 
-    xModifyQuery.Prepare;
-    xKeyParam := xModifyQuery.ParamByName(FKeyFieldName);
+    xKeyParam := xModifyQuery.SQLParams.ByName(FKeyFieldName);
     if xKeyParam = nil then
       raise Exception.CreateFmt('Parameter %s not found', [FKeyFieldName]);
 
-    xBlobParam := xModifyQuery.ParamByName(FBlobFieldName);
+    xBlobParam := xModifyQuery.SQLParams.ByName(FBlobFieldName);
     if xBlobParam = nil then
       raise Exception.CreateFmt('Parameter %s not found', [FBlobFieldName]);
 
-    xSelectQuery.ExecQuery;
+    xResultSet := xSelectQuery.OpenCursor(xReadTransaction);
 
-    if (xSelectQuery.Eof) then
+    while xResultSet.FetchNext do
     begin
-      xReadTransaction.Commit;
-      xWriteTransaction.Rollback;
+      xKeyField := xResultSet.ByName(FKeyFieldName);
+      if xKeyField = nil then
+        raise Exception.CreateFmt('Field %s not found', [FKeyFieldName]);
 
-      Writeln;
-      Writeln('Finish optimize');
-      Exit;
-    end;
+      xBlobField := xResultSet.ByName(FBlobFieldName);
+      if xBlobField = nil then
+        raise Exception.CreateFmt('Field %s not found', [FBlobFieldName]);
 
-    xKeyField := xSelectQuery.FieldByName(FKeyFieldName);
-    if xKeyField = nil then
-      raise Exception.CreateFmt('Field %s not found', [FKeyFieldName]);
-
-    xBlobField := xSelectQuery.FieldByName(FBlobFieldName);
-    if xBlobField = nil then
-      raise Exception.CreateFmt('Field %s not found', [FBlobFieldName]);
-
-    while not xSelectQuery.Eof do
-    begin
       case xKeyField.GetSQLType of
         SQL_INT64, SQL_LONG, SQL_SHORT:
           id := xKeyField.AsInt64;
@@ -503,10 +516,7 @@ begin
       end;
 
       if (xBlobField.IsNull) then
-      begin
-        xSelectQuery.Next;
         continue;
-      end;
 
       xReadBlob := xBlobField.GetAsBlob;
       xReadBlob.GetInfo(xNumSegments, xMaxSegmentSize, xTotalSize, xBlobType);
@@ -536,10 +546,9 @@ begin
             Writeln(Format('Key %s=%s''%s''. No change blob.', [FKeyFieldName, xHexPrefix, idBinary]));
           end
         end;
-        xSelectQuery.Next;
         continue;
       end;
-      xWriteBlob := ConvertBlob(xReadBlob, xWriteTransaction.TransactionIntf);
+      xWriteBlob := ConvertBlob(xReadBlob, xAttachment, xWriteTransaction);
       xReadBlob.Close;
 
       case xKeyParam.GetSQLType of
@@ -550,9 +559,9 @@ begin
       end;
 
       xBlobParam.AsBlob := xWriteBlob;
-      xModifyQuery.ExecQuery;
+      xModifyQuery.Execute(xWriteTransaction);
       xWriteBlob.Cancel;
-      xSelectQuery.Next;
+
       case xKeyField.GetSQLType of
         SQL_INT64, SQL_LONG, SQL_SHORT:
           if (xBlobType = btSegmented) and (FBlobType = btStream) then
@@ -595,15 +604,17 @@ begin
       end;
     end;
 
+    xResultSet.Close;
     xWriteTransaction.Commit;
   finally
-    xModifyQuery.Free;
-    xSelectQuery.Free;
-    if xWriteTransaction.InTransaction then
-      xWriteTransaction.Rollback;
-    xReadTransaction.Rollback;
-    xReadTransaction.Free;
-    xWriteTransaction.Free;
+    xModifyQuery := nil;
+    xSelectQuery := nil;
+    xWriteTransaction.Rollback;
+    xReadTransaction.Commit;
+    xReadTransaction := nil;
+    xWriteTransaction := nil;
+    xAttachment.Disconnect();
+    xAttachment := nil;
   end;
   Writeln;
   Writeln('Finish optimize');
