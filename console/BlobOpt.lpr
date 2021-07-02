@@ -9,6 +9,8 @@ uses
   Classes, SysUtils, CustApp, IB, Math
   {$ifdef WINDOWS}
   , Windows
+  {$else}
+  , Linux, unixtype
   {$endif}
   ;
 
@@ -168,19 +170,19 @@ begin
     Result := Result + ', rdb$db_key as db_key'
   else
     Result := Result + ', ' + Trim(FKeyFieldName);
-  Result := Result + lineEnding;
+  Result := Result + sLineBreak;
   Result := Result + 'from ';
   if (Trim(FTableName) = '') then
     raise Exception.Create('Table name not initialize');
   Result := Result + Trim(FTableName);
   if (Trim(FWhereFilter) <> '') then
   begin
-    Result := Result + lineEnding;
+    Result := Result + sLineBreak;
     Result := Result + 'where ' + Trim(FWhereFilter);
   end;
   if FRowsLimit > -1 then
   begin
-    Result := Result + lineEnding;
+    Result := Result + sLineBreak;
     Result := Result + Format('rows %d', [FRowsLimit]);
   end;
 end;
@@ -191,12 +193,12 @@ begin
   if (Trim(FTableName) = '') then
     raise Exception.Create('Table name not initialize');
   Result := Result + Trim(FTableName);
-  Result := Result + #13;
+  Result := Result + sLineBreak;
   Result := Result + 'set ';
   if (Trim(FBlobFieldName) = '') then
     raise Exception.Create('Blob field name not initialize');
   Result := Result + Trim(FBlobFieldName) + ' = :' + Trim(FBlobFieldName);
-  Result := Result + #13;
+  Result := Result + sLineBreak;
   Result := Result + 'where ' + Trim(FWhereFilter);
 
   if (Trim(FKeyFieldName) = '') or (Trim(FKeyFieldName) = 'DB_KEY') then
@@ -208,7 +210,7 @@ end;
 {$ifdef WINDOWS}
 function TBlobOptApp.ReadBlobStat(ABlob: IBlob): Double;
 var
-  xBuffer: array[0.. 2 * MAX_SEGMENT_SIZE + 1] of Byte;
+  xBuffer: array[0.. MAX_SEGMENT_SIZE] of Byte;
   xReadSize: Longint;
   iCounterPerSec: Int64;
   T1, T2: Int64;
@@ -228,8 +230,23 @@ begin
 end;
 {$else}
 function TBlobOptApp.ReadBlobStat(ABlob: IBlob): Double;
+var
+  xBuffer: array[0.. MAX_SEGMENT_SIZE] of Byte;
+  xReadSize: Longint;
+  ts, ts2: TimeSpec;
 begin
-  Result := 0;
+  clock_gettime(CLOCK_MONOTONIC, @ts);
+
+  xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
+  while (xReadSize > 0) do
+  begin
+    xReadSize := ABlob.Read(xBuffer, MAX_SEGMENT_SIZE);
+  end;
+
+  clock_gettime(CLOCK_MONOTONIC, @ts2);
+
+
+  Result := 1000.0 * (ts2.tv_sec - ts.tv_sec) + double(ts2.tv_nsec) / 1000000.0 - double(ts.tv_nsec) / 1000000.0;
 end;
 {$endif}
 
@@ -483,7 +500,7 @@ begin
     end
     else
        xSQL := BuildModifySql;
-    xModifyQuery := xAttachment.Prepare(xWriteTransaction, xSQL);
+    xModifyQuery := xAttachment.PrepareWithNamedParameters(xWriteTransaction, xSQL);
 
     Writeln;
     Writeln('Start optimize');

@@ -25,13 +25,10 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="2">
+    <RequiredPackages Count="1">
       <Item1>
-        <PackageName Value="ibexpressconsolemode"/>
-      </Item1>
-      <Item2>
         <PackageName Value="fbintf"/>
-      </Item2>
+      </Item1>
     </RequiredPackages>
     <Units Count="1">
       <Unit0>
