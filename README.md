@@ -166,7 +166,11 @@ The size (in bytes) of network packets. PacketSize may be in the range 512-32767
 
 Исполняемые файлы можно скачать по ссылкам 
 
-* [blob_optimize_x86.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x86.zip)
+* [blob_optimize_gui_Windows_x86.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x86.zip)
 
-* [blob_optimize_x64.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x64.zip)
+* [blob_optimize_gui_Windows_x64.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/blob_optimize_x64.zip)
+
+* [blob_optimize_console_x64.zip](https://github.com/sim1984/blob_opt/releases/download/1.0/BlobOpt_console_Win_x64.zip)
+
+* [blob_optimize_console_Linux_x64](https://github.com/sim1984/blob_opt/releases/download/1.0/BlobOpt)
 
