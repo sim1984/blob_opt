@@ -54,7 +54,7 @@ PIC  BLOB SUB_TYPE 0 SEGMENT SIZE 80
 
 Вы можете проанализировать каким образом ваши данные хранятся в BLOB полях с помощью утилиты blob_opt. Если BLOB является сегментированным, количество сегментов больше 1, и размер таких сегментов мал, вы можете оптимизировать хранение ваших данных в BLOB полях. Для этого необходимо прочитать BLOB и перезаписать его либо как потоковый, либо с максимальным размером сегмента. 
 
-## Анализ BLOB полей с помощью утилиты blob_opt
+## Анализ BLOB полей с помощью графической утилиты blob_opt
 
 ***
 *Важно*
@@ -68,6 +68,8 @@ PIC  BLOB SUB_TYPE 0 SEGMENT SIZE 80
 Утилита может работать в двух режимах:
 - строить запросы в автоматическом режиме (установлена галочка "Autobuild SQL query")
 - использовать запросы из заранее подготовленных файлов с расширением `.sql`
+
+Утилита доступна как в варианте с графическим интерфейсом, так и в консольном варианте.
 
 Для работы утилиты в режиме автоматического построения запросов обязательно требуется заполнить
 следующие поля:
@@ -114,6 +116,82 @@ NumSegments: 55; MaxSegmentSize: 65535; TotalSize: 3562695; BlobType: Segmented;
 ...
 ```
 
+## Анализ BLOB полей с помощью консольной утилиты BlobOpt
+
+Для получения справки по ключам консольной утилиты наберите команду
+
+```
+BlobOpt --help
+```
+
+После чего будет выведена следующая справка:
+
+```
+Usage: d:\IBase\blob_opt\console\BlobOpt.exe <options>
+
+Commands:
+  -h or --help - help for usage blobopt util
+  -a or --analyze - analyze blob field
+  -o or --optimize - optimize blob field
+
+Common options:
+  -d <database> or --database=<database> - database connection string
+  --user=<username> - database user name
+  --password=<password> - database password
+  --charset=<charset> - connection character set
+  --role=<role> - database role name
+  --table=<tablename> - the table in which the blob is analyzed or optimized. Used only if sqlSelectFile or sqlModifyFile options are not specified
+  --keyfield=<keyfield> - name of the key field, if not specified, then rdb$db_key is used
+  --blobfield=<blobfield> - name of the blob field
+  --filter=<filter> - WHERE filter for auto build select sql query. Not used when sqlSelectFile is not specified
+  --rows=<rows> - limiter ROWS for auto build select sql query. Not used when sqlSelectFile is not specified
+  --sqlSelectFile=<filename> - name of the file containing the select query to analyze or optimize the BLOB field
+
+Options for analyze:
+  --readstat - blob field read statistics
+
+Options for optimize:
+  --blobType=<blobtype> - convert ot segmented or stream blob
+  --maxSegmentSize=<segement_size> - maximum segment size for segmented blobs
+  --sqlModifyFile=<filename> - name of the file containing the update query to optimize the BLOB field
+```
+
+Пример использования консольной утилиты для анализа BLOB полей
+
+```
+BlobOpt --database=localhost/3052:f:\fbdata\2.5\NEWDEMO.FDB --user=SYSDBA --password=masterkey --table=wnppaper --blobfield=paper --analyze --readstat --rows=10 > log.txt
+```
+
+В отличие от графической утилиты, консольный вариант существует также для операционных систем семейства Linux.
+
+## Оптимизация BLOB полей с помощью утилиты BlobOpt
+
+Данная функциональность только в консольной версии.
+
+Поддерживается два режима оптимизации:
+- преобразование сегментированных BLOB полей в потоковые
+- преобразование потоковых BLOB полей в сегментированные, или перезапись сегментированных BLOB полей с заданным максимальным размером сегмента.
+
+Во втором случае я рекомендую задавать размер сегмента как можно больше, но не выше 65535.
+
+Так же как и в режиме анализа данных, модифицирующий запрос может быть построен автоматически или прочитан из файла.
+
+В файле `sqlModifyFile` должен быть указан UPDATE запрос, который обновляет данные в искомой таблицы. Этот запрос должен обновлять BLOB поле, и осуществлять фильтрацию по полю первичного ключа. Если в таблице нет первичного ключа или он является составным, то вы можете воспользоваться служебным полем `RDB$DB_KEY`.
+
+Пример содержимого файла для ключа `sqlModifyFile`
+
+```sql
+update wnppaper
+set paper = :paper
+where paperid = :paperid
+```
+
+Пример команды для оптимизации BLOB поля
+
+```
+BlobOpt --database=localhost/3052:f:\fbdata\2.5\NEWDEMO.FDB --user=SYSDBA --password=masterkey --table=wnppaper --blobfield=paper --optimize --rows=10 --blobType=segmented --segmentSize=32000
+```
+
 ## Как пишут/читают популярные компоненты доступа
 
 ### IBX2 for Lazarus
@@ -158,9 +236,7 @@ The size (in bytes) of network packets. PacketSize may be in the range 512-32767
 По умолчанию пишет BLOB сегментами размером 16 Кб. Этот размер можно переопределить непосредственно перед использованием FBBlob.
 Поддерживается использование потоковых BLOB.
 
-## Оптимизация BLOB полей с помощью утилиты blob_opt
 
-Данная функциональность временно отключена.
 
 ## Ссылки для скачивания утилиты blob_opt
 
